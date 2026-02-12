@@ -344,24 +344,26 @@ pip uninstall FPGABuilder
 #### 已完成
 
 1. ✅ **完善构建文档**：在README.md中添加详细的"构建与打包"章节
+
    - 快速构建Wheel包的两种方法
    - 完整打包流程和脚本选项说明
    - 清理构建文件的详细指南
    - 开发构建工作流建议
-
 2. ✅ **检查清理功能**：
-   - 验证`scripts/package.py`中的`clean()`方法覆盖所有构建临时文件
-   - 确认`.gitignore`包含所有构建产物目录
-   - 检查当前仓库状态，确保无未跟踪的构建文件
 
+   - 验证 `scripts/package.py`中的 `clean()`方法覆盖所有构建临时文件
+   - 确认 `.gitignore`包含所有构建产物目录
+   - 检查当前仓库状态，确保无未跟踪的构建文件
 3. ✅ **构建脚本验证**：
-   - `package.py`脚本功能完整，支持`sdist`、`wheel`、`exe`、`installer`等构建目标
+
+   - `package.py`脚本功能完整，支持 `sdist`、`wheel`、`exe`、`installer`等构建目标
    - 清理功能覆盖：`build/`、`dist/`、`*.egg-info/`、`__pycache__/`等
    - 提供友好的命令行界面和详细帮助信息
 
 #### 构建文档要点
 
 1. **Wheel包构建**：
+
    ```bash
    # 推荐方法：使用打包脚本
    python scripts/package.py --wheel
@@ -369,8 +371,8 @@ pip uninstall FPGABuilder
    # 传统方法：直接使用setup.py
    python setup.py bdist_wheel
    ```
-
 2. **清理构建文件**：
+
    ```bash
    # 使用打包脚本清理
    python scripts/package.py --clean
@@ -378,21 +380,23 @@ pip uninstall FPGABuilder
    # 或手动清理
    rm -rf build/ dist/ *.egg-info/ __pycache__/
    ```
-
 3. **开发工作流**：
-   - 开发时使用`pip install -e .`进行可编辑安装
-   - 构建测试时使用`package.py --clean --wheel`
-   - 发布前使用`package.py --clean --all`进行完整构建
+
+   - 开发时使用 `pip install -e .`进行可编辑安装
+   - 构建测试时使用 `package.py --clean --wheel`
+   - 发布前使用 `package.py --clean --all`进行完整构建
 
 #### 清理功能检查
 
 当前存在的构建临时文件（应被清理或忽略）：
+
 - `build/` - Vivado构建目录（包含测试工程）
 - `dist/` - 分发文件目录（应为空）
 - `src/FPGABuilder.egg-info/` - Egg信息目录
-- 各模块的`__pycache__/`目录
+- 各模块的 `__pycache__/`目录
 
 **建议操作**：
+
 ```bash
 # 在提交前运行清理
 python scripts/package.py --clean
@@ -419,7 +423,7 @@ git status --porcelain
 #### 后续建议
 
 1. 在CI/CD流水线中添加自动清理步骤
-2. 考虑添加`pre-commit`钩子，防止构建文件意外提交
+2. 考虑添加 `pre-commit`钩子，防止构建文件意外提交
 3. 完善开发环境设置脚本，自动化依赖安装和环境配置
 
 #### 已提交git更改
@@ -436,38 +440,39 @@ git status --porcelain
 #### 发现问题
 
 1. **ISS脚本语法错误**：`package.py`中Inno Setup脚本模板使用f-string导致花括号解析错误
-2. **requirements.txt文件缺失**：构建环境中`requirements.txt`未包含，导致`sdist`构建失败
-3. **PyInstaller参数冲突**：同时提供`.spec`文件和`--onefile`选项导致冲突
+2. **requirements.txt文件缺失**：构建环境中 `requirements.txt`未包含，导致 `sdist`构建失败
+3. **PyInstaller参数冲突**：同时提供 `.spec`文件和 `--onefile`选项导致冲突
 4. **编码问题**：控制台输出中文乱码
 
 #### 修复方案
 
 1. **修复ISS脚本语法**：
-   - 将f-string改为普通字符串，使用`replace()`方法插入版本号
-   - 添加`r`前缀处理反斜杠转义，消除语法警告
 
+   - 将f-string改为普通字符串，使用 `replace()`方法插入版本号
+   - 添加 `r`前缀处理反斜杠转义，消除语法警告
 2. **解决requirements.txt缺失问题**：
-   - 创建`MANIFEST.in`文件，包含`requirements.txt`等必要文件
-   - 修改`setup.py`的`package_data`包含`*.txt`文件
-   - 添加异常处理：当`requirements.txt`不存在时使用硬编码依赖列表
 
+   - 创建 `MANIFEST.in`文件，包含 `requirements.txt`等必要文件
+   - 修改 `setup.py`的 `package_data`包含 `*.txt`文件
+   - 添加异常处理：当 `requirements.txt`不存在时使用硬编码依赖列表
 3. **优化构建流程**：
-   - `sdist`和`wheel`构建现在可以成功完成
-   - PyInstaller可执行文件构建仍存在问题，但作为可选功能不影响整体打包
-   - 更新文档说明构建环境要求（需要`build`模块）
 
+   - `sdist`和 `wheel`构建现在可以成功完成
+   - PyInstaller可执行文件构建仍存在问题，但作为可选功能不影响整体打包
+   - 更新文档说明构建环境要求（需要 `build`模块）
 4. **编码处理**：
-   - 建议设置`PYTHONIOENCODING=utf-8`环境变量改善控制台输出
+
+   - 建议设置 `PYTHONIOENCODING=utf-8`环境变量改善控制台输出
 
 #### 验证结果
 
-| 构建目标 | 状态 | 说明 |
-|---------|------|------|
-| **清理功能** | ✅ 正常 | 可正确清理`build/`、`dist/`、`*.egg-info/`等目录 |
-| **sdist构建** | ✅ 正常 | 源代码分发包构建成功 |
-| **wheel构建** | ✅ 正常 | Wheel包构建成功 |
-| **可执行文件** | ⚠️ 部分正常 | PyInstaller需要额外配置，但失败不影响整体流程 |
-| **Windows安装程序** | ⚠️ 可选 | 需要Inno Setup，缺失时跳过 |
+| 构建目标                  | 状态          | 说明                                                    |
+| ------------------------- | ------------- | ------------------------------------------------------- |
+| **清理功能**        | ✅ 正常       | 可正确清理 `build/`、`dist/`、`*.egg-info/`等目录 |
+| **sdist构建**       | ✅ 正常       | 源代码分发包构建成功                                    |
+| **wheel构建**       | ✅ 正常       | Wheel包构建成功                                         |
+| **可执行文件**      | ⚠️ 部分正常 | PyInstaller需要额外配置，但失败不影响整体流程           |
+| **Windows安装程序** | ⚠️ 可选     | 需要Inno Setup，缺失时跳过                              |
 
 #### 测试命令
 
@@ -495,7 +500,7 @@ python scripts/package.py --clean
 
 #### 后续优化建议
 
-1. 将PyInstaller配置移出打包脚本，提供单独的`build_exe.py`脚本
+1. 将PyInstaller配置移出打包脚本，提供单独的 `build_exe.py`脚本
 2. 添加构建环境自动检查，提示缺失的依赖工具
 3. 优化控制台输出编码，提供英文/中文选项
 4. 添加构建缓存机制，加速重复构建
@@ -512,6 +517,7 @@ python scripts/package.py --clean
 运行命令：`python scripts/package.py --clean --all`
 
 **输出结果**：
+
 ```
 清理完成
 源代码分发包构建完成
@@ -524,10 +530,12 @@ wheel包构建完成
 ```
 
 **生成文件**：
+
 - `dist/fpgabuilder-0.1.0.tar.gz` (源代码分发包，48.5KB)
 - `dist/fpgabuilder-0.1.0-py3-none-any.whl` (Wheel包，52.5KB)
 
 **结论**：
+
 - ✅ **核心构建功能修复完成**：sdist和wheel构建成功
 - ✅ **清理功能工作正常**：可正确清理所有构建临时文件
 - ⚠️ **可选功能需要额外配置**：可执行文件和安装程序需要PyInstaller和Inno Setup
@@ -538,3 +546,11 @@ wheel包构建完成
 - **提交哈希**：44bf468
 - **修改文件**：`scripts/package.py`、`setup.py`、`MANIFEST.in`、`work_progress.md`、`docs/user_guide/index.md`
 - **提交消息**："修复打包脚本构建问题"
+
+#### 遗留问题
+
+* 构建安装包 --exe无法构建
+* 未将构建安装包 清理工程等操作命令写入开发文档“docs\developer_guide”
+* 工具链生成比特流还是报错
+* 工具链clean不能清理vivado在工程目录中生成的*.jou *.log 文件
+* 可以在.\test_zynq_proj中测试生成bit流并根据这个项目中的示例源码更新工具链的工程模板生成代码，最小化约束。

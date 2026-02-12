@@ -1,0 +1,25 @@
+project:
+  name: my_zynq_project
+  version: 1.0.0
+  description: my_zynq_project FPGA工程
+fpga:
+  vendor: xilinx
+  part: xc7z045ffg676-2
+  family: zynq-7000
+  top_module: my_zynq_project_wrapper
+template: zynq
+build:
+  synthesis:
+    strategy: Vivado Synthesis Defaults
+  implementation:
+    options: {}
+  bitstream:
+    options:
+      bin_file: true
+source:
+  hdl:
+  - path: src/hdl/**/*.v
+    language: verilog
+  constraints:
+  - path: src/constraints/*.xdc
+    type: xilinx
