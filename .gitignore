@@ -1,0 +1,118 @@
+# FPGABuilder Git忽略文件
+
+# Vivado生成文件
+/.Xil
+/*.log
+/*.jou
+/*.str
+/project
+/project-*
+/ip_repo
+/.*.cache
+*.dcp
+*.bit
+*.bin
+*.ltx
+*.mcs
+*.prm
+*.xpr
+*.hw
+*.hwdef
+*.xsa
+*.xpfm
+
+# 构建输出
+/build/
+/dist/
+/out/
+*.egg-info/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 环境文件
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 测试文件
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# 文档生成
+/docs/_build/
+/docs/site/
+/docs/api/
+
+# 打包文件
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.zip
+*.tar.gz
+*.7z
+
+# 配置文件（敏感信息）
+config/local.yaml
+config/secrets.yaml
+*.key
+*.pem
+*.crt
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# 日志文件
+*.log
+logs/
+
+# 特定于项目的忽略
+backup_existing_project/
+!.gitkeep
+
+# 用户数据
+user_data/

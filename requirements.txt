@@ -1,0 +1,54 @@
+# FPGABuilder 依赖包
+
+# 核心依赖
+click>=8.0.0
+pyyaml>=6.0
+colorama>=0.4.6
+tqdm>=4.65.0
+python-dotenv>=1.0.0
+
+# 配置和项目管理
+toml>=0.10.0
+jsonschema>=4.0.0
+pydantic>=2.0.0
+
+# 文件操作和路径处理
+pathlib2>=2.3.0; python_version < "3.4"
+watchdog>=3.0.0
+
+# 命令行界面增强
+rich>=13.0.0
+prompt-toolkit>=3.0.0
+questionary>=2.0.0
+
+# 文档生成
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocstrings>=0.23.0
+doxygen>=1.9.0
+
+# 测试和开发
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Windows特定支持
+pywin32>=305; sys_platform == "win32"
+winshell>=1.0.0; sys_platform == "win32"
+
+# 可选：GUI支持（用于menuconfig的curses替代）
+windows-curses>=2.3.0; sys_platform == "win32"
+
+# 打包和分发
+pyinstaller>=5.0.0
+setuptools>=65.0.0
+wheel>=0.40.0
+
+# 版本控制
+gitpython>=3.1.0
+
+# 网络和API请求（用于远程IP仓库）
+requests>=2.31.0
+aiohttp>=3.8.0
