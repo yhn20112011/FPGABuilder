@@ -234,3 +234,50 @@ pip uninstall FPGABuilder
 2. 添加更详细的安装文档和故障排除指南
 3. 考虑提供预编译的Windows安装包（exe）
 4. 添加版本升级和迁移支持
+
+## 2026-02-12 16:45:00
+
+### 比特流生成问题诊断与修复
+
+用户报告比特流生成问题：使用FPGABuilder可以综合实现，但生成比特流报错，而在Vivado GUI中可以正常生成比特流。参考测试工程路径：`E:\1-FPGA_PRJ\test_fpgabuilder\my_zynq_project`。
+
+#### 问题分析
+1. **比特流生成成功但文件位置错误**：
+   - 检查发现比特流文件成功生成在 `build/my_zynq_project.runs/impl_1/my_zynq_project_top.bit`
+   - FPGABuilder 期望比特流文件在 `build/bitstreams/` 目录，但Vivado默认输出到工程运行目录
+   - 代码库中没有专门的比特流文件复制/移动函数
+
+2. **根本原因**：
+   - `generate_bitstream()` 方法仅执行TCL脚本，没有处理比特流文件输出位置
+   - 缺少比特流输出目录配置和文件复制逻辑
+
+#### 修复方案
+修改 `src/plugins/vivado/tcl_templates.py` 中的 `BuildFlowTemplate.render()` 方法：
+
+1. **添加比特流输出目录配置**：
+   - 从配置读取 `bitstream.output_dir`，默认值 `build/bitstreams`
+   - 在TCL脚本中创建目录并设置 `BITSTREAM.OUTPUT_DIR` 属性
+   - 同时为当前设计和运行设置输出目录
+
+2. **修改内容**：
+   ```python
+   # 设置比特流输出目录
+   bitstream_output_dir = self.bitstream_config.get('output_dir', 'build/bitstreams')
+   lines.append(f'# 设置比特流输出目录: {bitstream_output_dir}')
+   lines.append(f'file mkdir "{bitstream_output_dir}"')
+   lines.append(f'set bitstream_output_dir [file normalize "{bitstream_output_dir}"]')
+   lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [current_design]')
+   lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [get_runs impl_1]')
+   ```
+
+#### 测试计划
+1. 在测试工程中运行 `vivado bitstream` 命令
+2. 验证比特流文件是否生成在 `build/bitstreams` 目录
+3. 检查比特流文件完整性
+4. 提交git修改
+
+#### 当前状态
+- ✅ 问题诊断完成
+- ✅ TCL模板修复已实施
+- ⚠️ 等待测试验证
+- ⚠️ 需要更新用户配置文档（可选）

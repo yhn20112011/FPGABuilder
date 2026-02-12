@@ -226,11 +226,39 @@ class BuildFlowTemplate(TCLTemplateBase):
         lines.append('# 生成比特流')
         # 降低未约束端口DRC错误的严重性，允许生成比特流用于测试
         lines.append('set_property SEVERITY {Warning} [get_drc_checks UCIO-1]')
+
+        # 设置比特流输出目录
+        bitstream_output_dir = self.bitstream_config.get('output_dir', 'build/bitstreams')
+        lines.append(f'# 设置比特流输出目录: {bitstream_output_dir}')
+        lines.append(f'file mkdir "{bitstream_output_dir}"')
+        # 使用绝对路径并确保正斜杠
+        lines.append(f'set bitstream_output_dir [file normalize "{bitstream_output_dir}"]')
+        lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [current_design]')
+        # 同时为运行设置输出目录
+        lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [get_runs impl_1]')
+        lines.append('')
+
         bitstream_options = self.bitstream_config.get('options', {})
         if bitstream_options:
+            lines.append('# 设置比特流选项')
             for opt_name, opt_value in bitstream_options.items():
-                lines.append(f'set_property {opt_name} {opt_value} [get_runs impl_1]')
+                # 映射常见的比特流选项名称到正确的属性名
+                if opt_name == 'bin_file':
+                    # 生成bin文件的正确属性
+                    prop_name = 'STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE'
+                    # 将Python布尔值转换为TCL布尔值
+                    prop_value = 'true' if opt_value in [True, 'true', 'True'] else 'false'
+                    lines.append(f'set_property {prop_name} {prop_value} [get_runs impl_1]')
+                elif opt_name == 'mask_file':
+                    prop_name = 'STEPS.WRITE_BITSTREAM.ARGS.MASK_FILE'
+                    prop_value = 'true' if opt_value in [True, 'true', 'True'] else 'false'
+                    lines.append(f'set_property {prop_name} {prop_value} [get_runs impl_1]')
+                else:
+                    # 其他选项直接传递
+                    lines.append(f'set_property {opt_name} {opt_value} [get_runs impl_1]')
 
+        # 重置比特流步骤（如果之前已经运行过）
+        lines.append('catch {reset_run impl_1 -from_step write_bitstream}')
         lines.append('launch_runs impl_1 -to_step write_bitstream')
         lines.append('wait_on_run impl_1')
         lines.append('')
@@ -239,6 +267,22 @@ class BuildFlowTemplate(TCLTemplateBase):
         lines.append('# 检查比特流生成结果')
         lines.append('if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {')
         lines.append('    error "比特流生成失败"')
+        lines.append('}')
+        lines.append('')
+
+        # 复制比特流文件到输出目录
+        lines.append('# 复制比特流文件到输出目录')
+        lines.append('set run_dir [get_property DIRECTORY [get_runs impl_1]]')
+        lines.append('set bit_files [glob -nocomplain "$run_dir/*.bit $run_dir/*.bin"]')
+        lines.append('if {[llength $bit_files] > 0} {')
+        lines.append('    foreach bit_file $bit_files {')
+        lines.append('        set filename [file tail $bit_file]')
+        lines.append('        set dest_file [file join $bitstream_output_dir $filename]')
+        lines.append('        file copy -force $bit_file $dest_file')
+        lines.append('        puts "已复制比特流文件: $filename -> $bitstream_output_dir"')
+        lines.append('    }')
+        lines.append('} else {')
+        lines.append('    puts "警告: 未找到比特流文件"')
         lines.append('}')
         lines.append('')
 
