@@ -76,6 +76,168 @@ FPGABuilder bitstream
 FPGABuilder program --cable xilinx_tcf --target hw_server:3121
 ```
 
+## 从零开始创建Zynq项目
+
+本节将指导您如何从零开始创建一个完整的Zynq项目，并生成比特流。基于我们的测试经验，我们将展示完整的流程和常见问题的解决方案。
+
+### 步骤1：创建项目
+
+使用`init`命令创建新的Zynq项目，指定FPGA器件和模板：
+
+```bash
+# 创建名为my_zynq_project的Zynq项目
+FPGABuilder init my_zynq_project --vendor xilinx --part xc7z045ffg676-2 --template zynq
+```
+
+该命令将：
+1. 创建项目目录结构
+2. 生成配置文件 `fpga_project.yaml`
+3. 创建示例HDL文件 `src/hdl/my_zynq_project_top.v`
+4. 创建示例约束文件 `src/constraints/clocks.xdc`
+5. 提供后续步骤指导
+
+### 步骤2：配置项目
+
+检查生成的配置文件 `fpga_project.yaml`：
+
+```yaml
+project:
+  name: my_zynq_project
+  version: 1.0.0
+  description: my_zynq_project FPGA工程
+fpga:
+  vendor: xilinx
+  part: xc7z045ffg676-2
+  family: zynq-7000
+  top_module: my_zynq_project_wrapper
+template: zynq
+source:
+  hdl:
+    - path: src/hdl/**/*.v
+      language: verilog
+  constraints:
+    - path: src/constraints/*.xdc
+      type: xilinx
+build:
+  synthesis:
+    strategy: Vivado Synthesis Defaults
+  implementation:
+    options: {}
+  bitstream:
+    options:
+      bin_file: true
+```
+
+根据您的设计需求修改配置。
+
+### 步骤3：编辑约束文件
+
+**关键步骤**：Vivado要求所有逻辑端口都有引脚位置约束，否则会拒绝生成比特流（DRC错误 UCIO-1）。
+
+打开 `src/constraints/clocks.xdc`，根据实际硬件修改引脚分配：
+
+```tcl
+# 时钟约束
+create_clock -name clk -period 10.000 [get_ports clk]
+
+# 电气标准
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
+# ... 为所有端口设置IOSTANDARD
+
+# 引脚位置约束（示例：ZC706开发板）
+set_property PACKAGE_PIN Y9 [get_ports clk]
+set_property PACKAGE_PIN AB10 [get_ports rst_n]
+# ... 为所有端口添加PACKAGE_PIN约束
+
+# 对于测试目的，可以暂时降低DRC严重性（不推荐用于生产）：
+# set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
+```
+
+**重要**：必须为顶层模块的所有输入/输出端口添加完整的引脚约束。
+
+### 步骤4：添加HDL源代码
+
+编辑 `src/hdl/my_zynq_project_top.v` 或添加新的HDL文件。确保顶层模块名称与配置中的 `fpga.top_module` 一致。
+
+### 步骤5：构建项目
+
+运行完整构建流程：
+
+```bash
+# 进入项目目录
+cd my_zynq_project
+
+# 运行完整构建（综合→实现→比特流）
+FPGABuilder build
+
+# 或使用Vivado特定命令
+FPGABuilder vivado build --steps all
+```
+
+构建过程：
+1. **综合**：将HDL转换为门级网表
+2. **实现**：布局布线，生成物理设计
+3. **比特流生成**：生成配置文件（.bit）
+
+### 步骤6：处理常见问题
+
+#### 问题1：比特流生成失败，DRC错误 "Unconstrained Logical Port"
+
+**现象**：
+```
+[ERROR] 比特流生成失败
+ERROR: [DRC UCIO-1] Unconstrained Logical Port: X ports have no user assigned specific location constraint (LOC).
+```
+
+**解决方案**：
+1. 检查约束文件是否包含所有端口的 `PACKAGE_PIN` 约束
+2. 确保约束文件中的端口名称与HDL中的信号名称完全一致
+3. 使用 `get_ports` 命令验证端口列表
+4. 对于测试目的，可以临时降低DRC严重性（在约束文件中添加）：
+   ```tcl
+   set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
+   ```
+
+#### 问题2：工程打开错误 "No open project"
+
+**现象**：实现或比特流生成步骤失败，错误信息 "No open project"
+
+**解决方案**：这是FPGABuilder插件问题，已修复。确保使用最新版本。
+
+#### 问题3：约束文件未正确加载
+
+**现象**：约束未被应用，时序约束失效
+
+**解决方案**：
+1. 检查约束文件路径配置
+2. 使用 `FPGABuilder vivado import-files` 重新导入文件
+3. 查看构建日志确认约束文件加载状态
+
+### 步骤7：生成二进制文件（可选）
+
+对于Zynq设备，可以生成boot.bin文件：
+
+```bash
+# 需要FSBL.elf文件和比特流文件
+FPGABuilder vivado packbin --output boot.bin --fsbl fsbl.elf --bitstream my_zynq_project.bit
+```
+
+### 验证构建成功
+
+构建成功后，检查输出文件：
+- `build/bitstreams/my_zynq_project.bit` - 比特流文件
+- `build/reports/` - 构建报告（时序、资源利用率等）
+- `build/logs/` - 详细构建日志
+
+### 最佳实践
+
+1. **版本控制**：将配置文件、HDL源代码和约束文件加入版本控制
+2. **约束管理**：为每个硬件板卡创建单独的约束文件
+3. **模块化设计**：将设计分解为多个模块，便于复用和维护
+4. **持续集成**：使用FPGABuilder自动化构建流程
+5. **文档记录**：记录设计决策和约束配置
+
 ## 项目结构
 
 一个标准的FPGABuilder项目包含以下结构：

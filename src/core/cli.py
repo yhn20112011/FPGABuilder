@@ -86,7 +86,7 @@ def init(ctx, project_name, vendor, part, template, path):
     project_path = Path(path) / project_name
     project_path.mkdir(parents=True, exist_ok=True)
 
-    # 生成工程配置
+    # 生成基础工程配置
     config = {
         'project': {
             'name': project_name,
@@ -100,9 +100,118 @@ def init(ctx, project_name, vendor, part, template, path):
         'template': template
     }
 
+    # 根据模板类型增强配置
+    if template == 'zynq':
+        # Zynq模板特有配置
+        config['fpga']['family'] = 'zynq-7000'
+        config['fpga']['top_module'] = f'{project_name}_wrapper'
+        # 添加建议的Zynq构建配置
+        config['build'] = {
+            'synthesis': {'strategy': 'Vivado Synthesis Defaults'},
+            'implementation': {'options': {}},
+            'bitstream': {'options': {'bin_file': True}}
+        }
+        # 添加Zynq特定约束文件提示
+        config['source'] = {
+            'hdl': [{'path': 'src/hdl/**/*.v', 'language': 'verilog'}],
+            'constraints': [{'path': 'src/constraints/*.xdc', 'type': 'xilinx'}]
+        }
+    elif template == 'versal':
+        # Versal模板配置
+        config['fpga']['family'] = 'versal'
+        config['fpga']['top_module'] = f'{project_name}_wrapper'
+    # basic模板保持默认配置
+
     # 保存配置
     config_path = project_path / 'fpga_project.yaml'
     config_manager.save_config(config, config_path)
+
+    # 创建标准工程结构
+    click.echo("创建工程目录结构...")
+    create_project_structure(path, project_name)
+
+    # 根据模板创建示例文件
+    if template == 'zynq':
+        # 创建示例Zynq顶层文件
+        example_hdl_dir = project_path / 'src' / 'hdl'
+        example_hdl_dir.mkdir(parents=True, exist_ok=True)
+        example_top_file = example_hdl_dir / f'{project_name}_top.v'
+        with open(example_top_file, 'w', encoding='utf-8') as f:
+            f.write(f'''// {project_name} 顶层模块
+// 由FPGABuilder自动生成
+
+module {project_name}_top (
+    input wire clk,
+    input wire rst_n,
+    input wire [7:0] data_in,
+    output wire [7:0] data_out,
+    output wire valid_out
+);
+
+    // 示例：简单的流水线寄存器
+    reg [7:0] data_reg;
+    reg valid_reg;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            data_reg <= 8'h0;
+            valid_reg <= 1'b0;
+        end else begin
+            data_reg <= data_in;
+            valid_reg <= 1'b1;
+        end
+    end
+
+    assign data_out = data_reg;
+    assign valid_out = valid_reg;
+
+endmodule
+''')
+        click.echo(f"创建示例顶层文件: {example_top_file}")
+
+        # 创建示例约束文件
+        example_constraint_dir = project_path / 'src' / 'constraints'
+        example_constraint_dir.mkdir(parents=True, exist_ok=True)
+        example_constraint_file = example_constraint_dir / 'clocks.xdc'
+        with open(example_constraint_file, 'w', encoding='utf-8') as f:
+            f.write(f'''# {project_name} 时钟和引脚约束
+# 由FPGABuilder自动生成
+# 请根据实际硬件修改引脚分配
+
+# 时钟约束
+create_clock -name clk -period 10.000 [get_ports clk]
+
+# 复位约束
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
+set_property IOSTANDARD LVCMOS33 [get_ports data_in[*]]
+set_property IOSTANDARD LVCMOS33 [get_ports data_out[*]]
+set_property IOSTANDARD LVCMOS33 [get_ports valid_out]
+
+# 引脚分配示例（ZC706开发板）
+# set_property PACKAGE_PIN Y9 [get_ports clk]
+# set_property PACKAGE_PIN AB10 [get_ports rst_n]
+# set_property PACKAGE_PIN AA10 [get_ports data_in[0]]
+# set_property PACKAGE_PIN AB11 [get_ports data_out[0]]
+# set_property PACKAGE_PIN AC11 [get_ports valid_out]
+
+# 重要：为所有端口添加正确的引脚约束，否则生成比特流时会遇到DRC错误
+# 对于测试目的，可以暂时降低DRC严重性：
+# set_property SEVERITY {{Warning}} [get_drc_checks UCIO-1]
+''')
+        click.echo(f"创建示例约束文件: {example_constraint_file}")
+
+        # 提示信息
+        click.echo("\n" + "="*60)
+        click.echo("Zynq工程创建完成！")
+        click.echo("下一步：")
+        click.echo(f"  1. 进入工程目录: cd {project_path}")
+        click.echo(f"  2. 编辑约束文件: {example_constraint_file}")
+        click.echo(f"     - 根据实际硬件修改引脚分配")
+        click.echo(f"     - 为所有端口添加正确的引脚约束")
+        click.echo("  3. 运行构建: FPGABuilder build")
+        click.echo("  4. 如有DRC错误，请参考约束文件中的注释")
+        click.echo("="*60)
 
     click.echo(f"工程已创建: {project_path}")
     click.echo(f"配置文件: {config_path}")
