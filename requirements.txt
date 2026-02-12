@@ -1,54 +1,36 @@
-# FPGABuilder 依赖包
+# FPGABuilder 核心运行时依赖
+# 注意：开发依赖在setup.py的extras_require中定义
 
-# 核心依赖
+# 命令行和配置
 click>=8.0.0
 pyyaml>=6.0
 colorama>=0.4.6
-tqdm>=4.65.0
-python-dotenv>=1.0.0
-
-# 配置和项目管理
 toml>=0.10.0
 jsonschema>=4.0.0
 pydantic>=2.0.0
 
-# 文件操作和路径处理
-pathlib2>=2.3.0; python_version < "3.4"
-watchdog>=3.0.0
-
-# 命令行界面增强
+# 进度显示和用户体验
+tqdm>=4.65.0
 rich>=13.0.0
 prompt-toolkit>=3.0.0
 questionary>=2.0.0
 
-# 文档生成
-mkdocs>=1.5.0
-mkdocs-material>=9.0.0
-mkdocstrings>=0.23.0
-doxygen>=1.9.0
-
-# 测试和开发
-pytest>=7.0.0
-pytest-cov>=4.0.0
-black>=23.0.0
-flake8>=6.0.0
-mypy>=1.0.0
+# 文件系统和环境
+python-dotenv>=1.0.0
+watchdog>=3.0.0
+pathlib2>=2.3.0; python_version < "3.4"
 
 # Windows特定支持
 pywin32>=305; sys_platform == "win32"
-winshell>=1.0.0; sys_platform == "win32"
 
-# 可选：GUI支持（用于menuconfig的curses替代）
-windows-curses>=2.3.0; sys_platform == "win32"
-
-# 打包和分发
-pyinstaller>=5.0.0
-setuptools>=65.0.0
-wheel>=0.40.0
-
-# 版本控制
+# 版本控制和网络（可选功能）
 gitpython>=3.1.0
-
-# 网络和API请求（用于远程IP仓库）
 requests>=2.31.0
 aiohttp>=3.8.0
+
+# 注意：以下依赖已移动到setup.py的extras_require中：
+# - 文档生成 (docs): mkdocs, mkdocs-material, mkdocstrings
+# - 测试开发 (dev): pytest, pytest-cov, black, flake8, mypy
+# - 打包工具 (packaging): pyinstaller, setuptools, wheel
+# - GUI支持 (gui): windows-curses (Windows)
+# - FPGA工具链 (vivado/quartus): 工具特定依赖

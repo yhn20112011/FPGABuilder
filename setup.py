@@ -79,6 +79,16 @@ setup(
             "sphinx-rtd-theme>=1.0.0",
             "twine>=4.0.0",
         ],
+        "docs": [
+            "mkdocs>=1.5.0",
+            "mkdocs-material>=9.0.0",
+            "mkdocstrings>=0.23.0",
+        ],
+        "packaging": [
+            "pyinstaller>=5.0.0",
+            "setuptools>=65.0.0",
+            "wheel>=0.40.0",
+        ],
         "gui": [
             "windows-curses>=2.3.0; sys_platform == 'win32'",
             "curses>=2.2; sys_platform != 'win32'",
@@ -88,6 +98,18 @@ setup(
         ],
         "quartus": [
             # Quartus相关额外依赖
+        ],
+        "full": [
+            "mkdocs>=1.5.0",
+            "mkdocs-material>=9.0.0",
+            "mkdocstrings>=0.23.0",
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "black>=23.0.0",
+            "flake8>=6.0.0",
+            "mypy>=1.0.0",
+            "pyinstaller>=5.0.0",
+            "windows-curses>=2.3.0; sys_platform == 'win32'",
         ],
     },
     keywords="fpga, build, automation, xilinx, vivado, quartus, hardware",
