@@ -36,6 +36,120 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
+## 构建与打包
+
+FPGABuilder提供了完整的构建和打包工具，支持生成Wheel包、源代码分发包、独立可执行文件和Windows安装程序。
+
+### 快速构建Wheel包
+
+Wheel包是Python的标准分发格式，可以在不编译的情况下快速安装。
+
+```bash
+# 方法1：使用setup.py直接构建
+python setup.py bdist_wheel
+
+# 方法2：使用打包脚本（推荐）
+python scripts/package.py --wheel
+
+# 生成的Wheel文件位于 dist/ 目录
+# 例如：dist/FPGABuilder-0.1.0-py3-none-any.whl
+```
+
+### 完整打包流程
+
+使用打包脚本可以一次性生成所有分发格式：
+
+```bash
+# 清理所有构建文件
+python scripts/package.py --clean
+
+# 构建所有分发格式（sdist + wheel + exe + installer）
+python scripts/package.py --all
+
+# 或者分别构建
+python scripts/package.py --sdist    # 源代码分发包
+python scripts/package.py --wheel    # Wheel包
+python scripts/package.py --exe      # 独立可执行文件
+python scripts/package.py --installer  # Windows安装程序（仅Windows）
+```
+
+### 清理构建文件
+
+构建过程中会产生临时文件，建议在提交代码前或重新构建前进行清理：
+
+```bash
+# 使用打包脚本清理
+python scripts/package.py --clean
+
+# 或者手动清理
+rm -rf build/ dist/ *.egg-info/ __pycache__/
+```
+
+打包脚本的`clean()`方法会清理以下目录和文件：
+- `build/` - 构建临时目录
+- `dist/` - 分发文件目录
+- `*.egg-info/` - Egg信息目录
+- `__pycache__/` - Python缓存文件
+- `.pytest_cache/` - 测试缓存
+- `.mypy_cache/` - 类型检查缓存
+
+### 打包脚本选项
+
+```bash
+python scripts/package.py --help
+
+用法: package.py [-h] [--clean] [--sdist] [--wheel] [--exe] [--installer] [--all] [--output OUTPUT] [--version]
+
+选项:
+  -h, --help            显示帮助信息
+  --clean               清理构建文件
+  --sdist               构建源代码分发包
+  --wheel               构建wheel包
+  --exe                 构建独立可执行文件
+  --installer           构建Windows安装程序
+  --all                 打包所有格式
+  --output OUTPUT, -o OUTPUT
+                        输出目录 (默认: "dist")
+  --version, -V         显示版本
+```
+
+### 构建环境要求
+
+- **Python**: 3.8或更高版本
+- **构建工具**: `pip install build` (用于`sdist`和`wheel`)
+- **可选依赖**:
+  - `pip install pyinstaller` (用于可执行文件)
+  - Inno Setup (用于Windows安装程序)
+
+### 开发构建工作流
+
+1. **开发阶段**：
+   ```bash
+   # 安装开发依赖
+   pip install -e .
+
+   # 测试功能
+   FPGABuilder --version
+   ```
+
+2. **构建测试**：
+   ```bash
+   # 清理并构建Wheel包
+   python scripts/package.py --clean --wheel
+
+   # 测试安装
+   pip install dist/FPGABuilder-*.whl
+   ```
+
+3. **发布准备**：
+   ```bash
+   # 完整构建所有分发格式
+   python scripts/package.py --clean --all
+
+   # 验证包文件
+   ls -la dist/
+   ```
+
 ## 快速开始
 
 ### 创建新工程

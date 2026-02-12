@@ -20,6 +20,7 @@
 *.hwdef
 *.xsa
 *.xpfm
+test_project/*.backup.jou
 
 # 构建输出
 /build/
