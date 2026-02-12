@@ -509,9 +509,9 @@ class FileScanner:
         hdl_files = scanned_files.get('hdl', [])
         for file_info in hdl_files:
             cmd = f'add_files {{{file_info["path"]}}}'
-            # 如果指定了语言，添加-language参数
-            if file_info.get('language') != 'auto':
-                cmd += f' -language {file_info["language"]}'
+            # Vivado可以通过文件扩展名自动检测语言，移除-language参数以避免兼容性问题
+            # if file_info.get('language') != 'auto':
+            #     cmd += f' -language {file_info["language"]}'
             commands['hdl_commands'].append(cmd)
 
         # 约束文件命令

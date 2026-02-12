@@ -645,6 +645,14 @@ class VivadoPlugin(FPGAVendorPlugin):
 
         impl_tcl = '\n'.join(impl_lines)
 
+        # 添加打开工程命令
+        project_name = config.get('project', {}).get('name', 'fpga_project')
+        project_dir = config.get('project_dir', './build')
+        # 使用正斜杠构建路径，避免转义问题
+        project_path = f'{project_dir}/{project_name}'.replace('\\', '/')
+        open_cmd = f'open_project {project_path}'
+        impl_tcl = f'{open_cmd}\n{impl_tcl}'
+
         # 执行TCL脚本
         result = self._run_vivado_tcl(impl_tcl, "implement.tcl")
 
@@ -689,6 +697,14 @@ class VivadoPlugin(FPGAVendorPlugin):
                 bitstream_lines.append(line)
 
         bitstream_tcl = '\n'.join(bitstream_lines)
+
+        # 添加打开工程命令
+        project_name = config.get('project', {}).get('name', 'fpga_project')
+        project_dir = config.get('project_dir', './build')
+        # 使用正斜杠构建路径，避免转义问题
+        project_path = f'{project_dir}/{project_name}'.replace('\\', '/')
+        open_cmd = f'open_project {project_path}'
+        bitstream_tcl = f'{open_cmd}\n{bitstream_tcl}'
 
         # 执行TCL脚本
         result = self._run_vivado_tcl(bitstream_tcl, "generate_bitstream.tcl")

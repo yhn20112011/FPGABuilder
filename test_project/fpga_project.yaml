@@ -1,100 +1,57 @@
 project:
-  name: test_project
-  version: 1.0.0
-  description: test_project FPGA工程
-  author: "FPGABuilder User"
-  license: "MIT"
+  name: "test_multi_module"
+  version: "1.0.0"
+  description: "多模块Vivado工程测试"
 
 fpga:
-  vendor: xilinx
-  part: xc7z045ffg676-2
-  family: "zynq-7000"
-  top_module: top
-  # Vivado特定配置
-  vivado_version: "2019.1"  # 指定Vivado版本
-  # vivado_path: "C:/Xilinx/Vivado/2019.1"  # 可选的Vivado安装路径
+  vendor: "xilinx"
+  part: "xc7z045ffg676-2"
+  top_module: "top"
+  vivado_version: "2018.2"
   vivado_settings:
     target_language: "verilog"
     synthesis_flow: "project"
-    implementation_flow: "project"
 
 source:
   hdl:
-    # 使用通配符模式匹配HDL文件
-    - pattern: "src/hdl/**/*.v"
+    - path: "src/hdl/*.v"
       language: "verilog"
       language_auto_detect: true
       file_type: "source"
+      exclude: ["*_test.v", "*_tb.v"]
       recursive: true
-      exclude: ["**/_*", "**/test_*"]  # 排除测试文件
-
-    - pattern: "src/hdl/**/*.vhd"
-      language: "vhdl"
-      language_auto_detect: true
-      file_type: "source"
-      recursive: true
-      exclude: ["**/_*", "**/test_*"]
-
-    # 也可以使用传统path方式指定单个文件
-    - path: "src/hdl/top.v"
-      language: "verilog"
-      file_type: "source"
 
   constraints:
-    # 使用通配符匹配约束文件
-    - pattern: "src/constraints/**/*.xdc"
-      recursive: true
-      exclude: ["**/_*"]
-
-  # Block Design支持
-  block_design:
-    # 支持两种方式：直接指定.bd文件或TCL脚本
-    # bd_file: "src/bd/system.bd"
-    tcl_script: "src/bd/system.tcl"  # 从TCL脚本恢复BD
-    is_top: true  # BD作为顶层设计
-    wrapper_name: "system_wrapper"
-    auto_wrapper: true
-    generate_wrapper: true
-    wrapper_language: "verilog"
-    wrapper_output_dir: "src/hdl/wrapper"
-
-dependencies:
-  git_submodules: []
-  python_packages: []
+    - path: "src/constraints/*.xdc"
+      type: "xdc"
 
 build:
   synthesis:
     strategy: "Vivado Synthesis Defaults"
     options:
       flatten_hierarchy: "rebuilt"
-      gated_clock_conversion: "off"
-      bufg: "12"
 
   implementation:
     options:
       opt_design: true
       place_design: true
       route_design: true
-      phys_opt_design: true
 
   bitstream:
-    options:
-      bin_file: true
-      write_cfgmem: false
+    options: {}
 
-  # 构建钩子脚本
-  hooks:
-    # pre_synth: "scripts/pre_synth.tcl"
-    # post_synth: "scripts/post_synth.tcl"
-    # pre_impl: "scripts/pre_impl.tcl"
-    # post_impl: "scripts/post_impl.tcl"
-    # post_bitstream: "scripts/post_bitstream.tcl"
-    # bin_merge_script: "scripts/merge_bin.py"
-    custom_scripts:
-      generate_mcs: "scripts/generate_mcs.tcl"
+  bin_merge:
+    enabled: true
+    output_path: "build/boot.bin"
+    components:
+      - type: "fsbl"
+        path: "build/fsbl.elf"
+        offset: "0x00000000"
+      - type: "bitstream"
+        path: "build/test_multi_module.bit"
+        offset: "0x00100000"
 
-documentation:
-  enabled: true
-  format: "mkdocs"
-  output_dir: "docs"
-  include_doxygen: false
+programming:
+  cable: "xilinx_tcf"
+  target: "localhost:3121"
+  flash: false

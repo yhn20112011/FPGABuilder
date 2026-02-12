@@ -53,7 +53,7 @@ def cli(ctx, config, verbose):
 
     # 初始化配置
     if config:
-        ctx.obj['config_manager'] = ConfigManager(config_path=config)
+        ctx.obj['config_manager'] = ConfigManager(config_path=Path(config))
     else:
         ctx.obj['config_manager'] = ConfigManager()
 
