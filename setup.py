@@ -18,8 +18,30 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 # 读取依赖
-with open('requirements.txt', 'r', encoding='utf-8') as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+try:
+    with open('requirements.txt', 'r', encoding='utf-8') as f:
+        requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+except FileNotFoundError:
+    # 如果requirements.txt不存在，使用硬编码的依赖列表
+    requirements = [
+        'click>=8.0.0',
+        'pyyaml>=6.0',
+        'colorama>=0.4.6',
+        'toml>=0.10.0',
+        'jsonschema>=4.0.0',
+        'pydantic>=2.0.0',
+        'tqdm>=4.65.0',
+        'rich>=13.0.0',
+        'prompt-toolkit>=3.0.0',
+        'questionary>=2.0.0',
+        'python-dotenv>=1.0.0',
+        'watchdog>=3.0.0',
+        'pywin32>=305; sys_platform == "win32"',
+        'gitpython>=3.1.0',
+        'requests>=2.31.0',
+        'aiohttp>=3.8.0',
+    ]
+    print("警告: requirements.txt未找到，使用默认依赖列表")
 
 setup(
     name="FPGABuilder",
@@ -57,7 +79,7 @@ setup(
     packages=find_packages(where="src"),
     include_package_data=True,
     package_data={
-        "": ["*.yaml", "*.yml", "*.tcl", "*.template", "*.md"],
+        "": ["*.yaml", "*.yml", "*.tcl", "*.template", "*.md", "*.txt"],
         "fpga_builder": ["config/*.yaml", "config/templates/*", "templates/*"],
     },
     python_requires=">=3.8",

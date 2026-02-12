@@ -230,11 +230,11 @@ exe = EXE(
             return False
 
         # 创建Inno Setup脚本
-        iss_content = f"""; FPGABuilder安装脚本
+        iss_content = r"""; FPGABuilder安装脚本
 ; 由packager.py自动生成
 
 #define MyAppName "FPGABuilder"
-#define MyAppVersion "{self.version}"
+#define MyAppVersion "{version}"
 #define MyAppPublisher "FPGABuilder Team"
 #define MyAppURL "https://github.com/yourusername/FPGABuilder"
 #define MyAppExeName "FPGABuilder.exe"
@@ -286,6 +286,8 @@ begin
   // 检查依赖等
 end;
 """
+        # 替换版本号
+        iss_content = iss_content.replace("{version}", self.version)
 
         # 写入ISS文件
         iss_file = self.project_root / "FPGABuilder.iss"

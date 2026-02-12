@@ -6,6 +6,10 @@ FPGABuilder是一个跨平台的FPGA自动构建工具链，旨在简化和标�
 
 ## 安装
 
+### 安装whl文件
+
+pip install dist/FPGABuilder-0.1.0-py3-none-any.whl
+
 ### Windows安装
 
 1. 下载最新版本的FPGABuilder安装包
@@ -82,7 +86,7 @@ FPGABuilder program --cable xilinx_tcf --target hw_server:3121
 
 ### 步骤1：创建项目
 
-使用`init`命令创建新的Zynq项目，指定FPGA器件和模板：
+使用 `init`命令创建新的Zynq项目，指定FPGA器件和模板：
 
 ```bash
 # 创建名为my_zynq_project的Zynq项目
@@ -90,6 +94,7 @@ FPGABuilder init my_zynq_project --vendor xilinx --part xc7z045ffg676-2 --templa
 ```
 
 该命令将：
+
 1. 创建项目目录结构
 2. 生成配置文件 `fpga_project.yaml`
 3. 创建示例HDL文件 `src/hdl/my_zynq_project_top.v`
@@ -176,6 +181,7 @@ FPGABuilder vivado build --steps all
 ```
 
 构建过程：
+
 1. **综合**：将HDL转换为门级网表
 2. **实现**：布局布线，生成物理设计
 3. **比特流生成**：生成配置文件（.bit）
@@ -185,12 +191,14 @@ FPGABuilder vivado build --steps all
 #### 问题1：比特流生成失败，DRC错误 "Unconstrained Logical Port"
 
 **现象**：
+
 ```
 [ERROR] 比特流生成失败
 ERROR: [DRC UCIO-1] Unconstrained Logical Port: X ports have no user assigned specific location constraint (LOC).
 ```
 
 **解决方案**：
+
 1. 检查约束文件是否包含所有端口的 `PACKAGE_PIN` 约束
 2. 确保约束文件中的端口名称与HDL中的信号名称完全一致
 3. 使用 `get_ports` 命令验证端口列表
@@ -210,6 +218,7 @@ ERROR: [DRC UCIO-1] Unconstrained Logical Port: X ports have no user assigned sp
 **现象**：约束未被应用，时序约束失效
 
 **解决方案**：
+
 1. 检查约束文件路径配置
 2. 使用 `FPGABuilder vivado import-files` 重新导入文件
 3. 查看构建日志确认约束文件加载状态
@@ -226,6 +235,7 @@ FPGABuilder vivado packbin --output boot.bin --fsbl fsbl.elf --bitstream my_zynq
 ### 验证构建成功
 
 构建成功后，检查输出文件：
+
 - `build/bitstreams/my_zynq_project.bit` - 比特流文件
 - `build/reports/` - 构建报告（时序、资源利用率等）
 - `build/logs/` - 详细构建日志
@@ -363,21 +373,21 @@ FPGABuilder [全局选项] <命令> [命令选项]
 
 ### 常用命令
 
-| 命令 | 描述 | 示例 |
-|------|------|------|
-| `init` | 初始化新项目 | `FPGABuilder init my_project --vendor xilinx` |
-| `create` | 创建项目结构 | `FPGABuilder create --template zynq` |
-| `config` | 配置项目 | `FPGABuilder config` |
-| `build` | 构建项目 | `FPGABuilder build` |
-| `synth` | 仅综合 | `FPGABuilder synth` |
-| `impl` | 仅实现 | `FPGABuilder impl` |
-| `bitstream` | 生成比特流 | `FPGABuilder bitstream` |
-| `program` | 烧录设备 | `FPGABuilder program --cable xilinx_tcf` |
-| `ip` | 管理IP核 | `FPGABuilder ip create axi_uart` |
-| `hls` | 管理HLS工程 | `FPGABuilder hls create --language cpp` |
-| `docs` | 生成文档 | `FPGABuilder docs --format mkdocs` |
-| `clean` | 清理构建文件 | `FPGABuilder clean --all` |
-| `pack` | 打包发布 | `FPGABuilder pack --output release.zip` |
+| 命令          | 描述         | 示例                                            |
+| ------------- | ------------ | ----------------------------------------------- |
+| `init`      | 初始化新项目 | `FPGABuilder init my_project --vendor xilinx` |
+| `create`    | 创建项目结构 | `FPGABuilder create --template zynq`          |
+| `config`    | 配置项目     | `FPGABuilder config`                          |
+| `build`     | 构建项目     | `FPGABuilder build`                           |
+| `synth`     | 仅综合       | `FPGABuilder synth`                           |
+| `impl`      | 仅实现       | `FPGABuilder impl`                            |
+| `bitstream` | 生成比特流   | `FPGABuilder bitstream`                       |
+| `program`   | 烧录设备     | `FPGABuilder program --cable xilinx_tcf`      |
+| `ip`        | 管理IP核     | `FPGABuilder ip create axi_uart`              |
+| `hls`       | 管理HLS工程  | `FPGABuilder hls create --language cpp`       |
+| `docs`      | 生成文档     | `FPGABuilder docs --format mkdocs`            |
+| `clean`     | 清理构建文件 | `FPGABuilder clean --all`                     |
+| `pack`      | 打包发布     | `FPGABuilder pack --output release.zip`       |
 
 ### 命令示例
 
@@ -483,11 +493,13 @@ FPGABuilder build --remote user@server:/home/user/build
 #### 1. 插件加载失败
 
 **症状**：
+
 ```
 错误：无法加载插件 'vivado'
 ```
 
 **解决方法**：
+
 1. 检查插件是否安装：`FPGABuilder plugins list`
 2. 检查插件依赖是否满足
 3. 查看详细错误信息：`FPGABuilder --verbose plugins list`
@@ -495,11 +507,13 @@ FPGABuilder build --remote user@server:/home/user/build
 #### 2. 配置验证失败
 
 **症状**：
+
 ```
 错误：配置验证失败
 ```
 
 **解决方法**：
+
 1. 验证配置文件语法：`FPGABuilder validate`
 2. 检查必填字段是否完整
 3. 查看具体错误信息
@@ -507,11 +521,13 @@ FPGABuilder build --remote user@server:/home/user/build
 #### 3. 构建过程失败
 
 **症状**：
+
 ```
 错误：构建失败
 ```
 
 **解决方法**：
+
 1. 查看详细构建日志：`FPGABuilder --verbose build`
 2. 检查工具链是否安装正确
 3. 查看构建报告：`build/reports/build_summary.html`
@@ -563,6 +579,7 @@ FPGABuilder build --dry-run
 如果您有一个传统的FPGA项目（使用Makefile、TCL脚本等），可以按以下步骤迁移：
 
 1. **分析现有项目结构**
+
    ```bash
    # 识别关键组件
    # - 源代码文件
@@ -570,20 +587,20 @@ FPGABuilder build --dry-run
    # - IP核文件
    # - 构建脚本
    ```
-
 2. **创建FPGABuilder配置**
+
    ```bash
    # 生成基础配置
    FPGABuilder init existing_project --vendor xilinx --part <your_part>
    ```
-
 3. **转换构建脚本**
+
    ```python
    # 将TCL脚本转换为配置选项
    # 将Makefile目标转换为构建步骤
    ```
-
 4. **逐步迁移**
+
    - 先迁移基本构建流程
    - 再迁移高级功能
    - 最后优化和自动化

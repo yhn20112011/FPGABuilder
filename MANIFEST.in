@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+recursive-include src *.py
+recursive-include src *.yaml
+recursive-include src *.yml
+recursive-include src *.tcl
+recursive-include src *.template
+recursive-include src *.md
+recursive-include src *.txt
