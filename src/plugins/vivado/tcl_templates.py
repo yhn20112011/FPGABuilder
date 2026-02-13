@@ -396,6 +396,10 @@ class CleanTemplate(TCLTemplateBase):
 class GUITemplate(TCLTemplateBase):
     """GUI打开模板"""
 
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.project_dir = config.get('project_dir', './build')
+
     def render(self) -> str:
         """渲染GUI模板"""
         lines = [
@@ -406,7 +410,9 @@ class GUITemplate(TCLTemplateBase):
 
         # 打开工程
         lines.append('# 打开工程')
-        lines.append(f'open_project {self.project_name}')
+        # 工程路径：project_dir/project_name（Vivado会自动查找.xpr文件）
+        project_path = f'{self.project_dir}/{self.project_name}'
+        lines.append(f'open_project {{{project_path}}}')
         lines.append('')
 
         # 设置GUI视图

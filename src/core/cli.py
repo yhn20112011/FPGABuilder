@@ -608,6 +608,62 @@ def gui(ctx):
                 click.echo(f"  {error}")
 
 
+@cli.command()
+@click.pass_context
+def prepare(ctx):
+    """准备工程（创建工程、导入文件、恢复BD，但不打开GUI）"""
+    click.echo("准备工程（创建工程、导入文件、恢复BD，但不打开GUI）...")
+
+    # 获取配置管理器和插件管理器
+    config_manager = ctx.obj['config_manager']
+    plugin_manager = ctx.obj['plugin_manager']
+
+    # 查找配置文件
+    config_file = config_manager.find_config_file(Path.cwd())
+    if not config_file:
+        click.echo("[ERROR] 未找到项目配置文件 (fpga_project.yaml)")
+        return
+
+    # 加载配置
+    try:
+        config = config_manager.load_config(config_file)
+    except Exception as e:
+        click.echo(f"[ERROR] 加载配置文件失败: {e}")
+        return
+
+    # 获取FPGA厂商
+    vendor = config.get('fpga', {}).get('vendor', 'xilinx')
+    if vendor not in ['xilinx', 'altera', 'lattice']:
+        click.echo(f"[ERROR] 不支持的FPGA厂商: {vendor}")
+        return
+
+    # 获取插件（临时直接实例化Vivado插件，避免插件发现问题）
+    plugin = None
+    if vendor == 'xilinx':
+        if VivadoPlugin is None:
+            click.echo("[ERROR] 无法导入Vivado插件")
+            return
+        plugin = VivadoPlugin()
+        # 调用prepare_project_only方法
+        result = plugin.prepare_project_only(config)
+    else:
+        click.echo(f"[ERROR] 暂不支持的FPGA厂商: {vendor}")
+        return
+
+    # 处理结果
+    if result.success:
+        click.echo("[OK] 工程准备完成（未打开GUI）")
+        if result.artifacts:
+            for key, value in result.artifacts.items():
+                click.echo(f"  {key}: {value}")
+        click.echo("\n提示: 使用 'FPGABuilder gui' 命令打开工程GUI界面")
+    else:
+        click.echo("[ERROR] 工程准备失败")
+        if result.errors:
+            for error in result.errors:
+                click.echo(f"  {error}")
+
+
 # vivado命令组
 @cli.group()
 def vivado():

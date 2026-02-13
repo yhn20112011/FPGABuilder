@@ -1120,3 +1120,70 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 1. **实际环境测试**：在安装Vivado的环境中验证GUI打开功能
 2. **错误处理增强**：添加更详细的错误信息和恢复机制
 3. **用户反馈收集**：根据用户使用情况进一步优化流程
+
+## 2026-02-13 后续更新：添加prepare命令并修复GUI打开路径
+
+### 用户新需求
+用户提出新思路：额外增加一个仅构建工程、导入源文件、如果存在BD文件则导入或恢复BD的命令，之后利用`FPGABuilder gui`打开build中的vivado工程。这样灵活好实现不容易出bug。
+
+### 已完成的修改
+
+#### 1. 修复GUITemplate工程打开路径问题
+- **问题**：`GUITemplate`中的`open_project`命令使用`self.project_name`，但工程实际创建在`build/project_name`目录中
+- **修复**：修改`GUITemplate`类，添加`__init__`方法获取`project_dir`，更新`open_project`命令使用完整路径`{project_dir}/{project_name}`
+- **代码修改**：
+  ```python
+  class GUITemplate(TCLTemplateBase):
+      def __init__(self, config: Dict[str, Any]):
+          super().__init__(config)
+          self.project_dir = config.get('project_dir', './build')
+
+      def render(self) -> str:
+          # 打开工程
+          project_path = f'{self.project_dir}/{self.project_name}'
+          lines.append(f'open_project {{{project_path}}}')
+  ```
+
+#### 2. 添加prepare_project_only方法到Vivado插件
+- **功能**：仅创建工程、导入文件、恢复BD，但不打开GUI
+- **位置**：`src/plugins/vivado/plugin.py` 中的 `prepare_project_only()` 方法
+- **逻辑**：
+  1. 初始化检查和文件扫描
+  2. 生成不含GUI命令的工程准备脚本
+  3. 批处理模式执行TCL脚本创建工程
+  4. 返回构建结果，包含工程位置信息
+
+#### 3. 添加prepare命令到CLI
+- **命令**：`FPGABuilder prepare`
+- **描述**：准备工程（创建工程、导入文件、恢复BD，但不打开GUI）
+- **位置**：`src/core/cli.py` 中的 `prepare()` 函数
+- **功能**：调用Vivado插件的`prepare_project_only()`方法，显示工程位置信息，提示使用`FPGABuilder gui`打开GUI
+
+#### 4. 测试验证
+1. **构建验证**：运行 `python setup.py bdist_wheel` 成功
+2. **安装验证**：运行 `pip install dist/FPGABuilder-0.2.0-py3-none-any.whl --force-reinstall` 成功
+3. **功能测试**：
+   - 创建测试项目：`FPGABuilder init test_proj --vendor xilinx --part xc7z045ffg676-2`
+   - 运行prepare命令：`FPGABuilder prepare` 成功创建工程
+   - 运行vivado gui命令：`FPGABuilder vivado gui` 成功启动Vivado GUI
+4. **命令验证**：`FPGABuilder --help` 正确显示prepare命令
+
+### 使用流程
+用户现在可以：
+1. 使用 `FPGABuilder prepare` 创建工程（不打开GUI）
+2. 使用 `FPGABuilder vivado gui` 打开已存在的工程GUI
+
+或者继续使用：
+- `FPGABuilder gui`：自动创建工程并打开GUI（两阶段执行）
+
+### 修改文件列表
+- `src/plugins/vivado/tcl_templates.py` - 修复GUITemplate路径问题
+- `src/plugins/vivado/plugin.py` - 添加prepare_project_only()方法
+- `src/core/cli.py` - 添加prepare命令
+- `work_progress.md` - 更新工作记录
+
+### Git提交
+准备提交所有更改。
+
+### 总结
+已按照用户要求实现新的prepare命令，并修复了GUI打开路径问题。测试验证通过，工具链构建和安装成功。用户现在可以使用分离的命令流程：先prepare创建工程，再vivado gui打开界面，这种方式更加灵活可靠。
