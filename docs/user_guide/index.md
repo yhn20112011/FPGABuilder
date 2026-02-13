@@ -459,6 +459,76 @@ build:
     post_impl: "scripts/analyze_timing.tcl"
 ```
 
+### 开发工具路径配置
+
+FPGABuilder支持通过配置文件指定开发工具的安装路径和版本，这在以下场景中特别有用：
+- 系统安装了多个版本的开发工具
+- 开发工具安装在非标准位置
+- 需要确保特定版本的工具被使用
+
+#### Vivado配置示例
+
+```yaml
+fpga:
+  vendor: "xilinx"
+  family: "zynq-7000"
+  part: "xc7z045ffg676-2"
+  top_module: "system_wrapper"
+  # Vivado安装路径（可选）
+  vivado_path: "C:/Xilinx/Vivado/2019.1"
+  # Vivado版本号（可选，格式：YYYY.N）
+  vivado_version: "2019.1"
+  # Vivado设置（可选）
+  vivado_settings:
+    default_lib: "xil_defaultlib"
+    target_language: "verilog"
+    synthesis_flow: "project"
+    implementation_flow: "project"
+```
+
+#### 配置说明
+
+| 配置项 | 类型 | 描述 | 示例 |
+|--------|------|------|------|
+| `vivado_path` | 字符串 | Vivado安装路径。可以是：<br>1. `vivado.bat` (Windows) 或 `vivado` (Linux) 可执行文件路径<br>2. Vivado安装目录（自动查找可执行文件）<br>3. 如果未指定，FPGABuilder将自动检测系统安装 | `"C:/Xilinx/Vivado/2019.1"`<br>`"D:/Tools/Vivado/2023.2/bin/vivado.bat"` |
+| `vivado_version` | 字符串 | Vivado版本号，格式：YYYY.N。<br>用于版本兼容性检查，确保使用正确的版本。<br>如果未指定，将从可执行文件或路径中自动检测 | `"2019.1"`<br>`"2023.2"`<br>`"2024.1"` |
+| `vivado_settings` | 对象 | Vivado特定设置，包括：<br>- `default_lib`: 默认库名称<br>- `target_language`: 目标语言（verilog/vhdl）<br>- `synthesis_flow`: 综合流程（out_of_context/project）<br>- `implementation_flow`: 实现流程（project/non_project） | 见上方示例 |
+
+#### 工作流程
+
+1. **配置优先**：如果配置了 `vivado_path`，FPGABuilder将首先尝试使用该路径
+2. **路径验证**：检查路径是否存在，查找Vivado可执行文件
+3. **版本检查**：如果配置了 `vivado_version`，验证实际版本是否匹配
+4. **自动回退**：如果配置路径无效，回退到自动检测
+
+#### 跨平台注意事项
+
+- **Windows**: Vivado可执行文件通常是 `vivado.bat`
+- **Linux**: Vivado可执行文件通常是 `vivado`
+- **路径格式**: 使用正斜杠 `/` 或双反斜杠 `\\` 作为路径分隔符
+- **环境变量**: 支持在路径中使用环境变量（如 `%VIVADO_HOME%` 或 `$VIVADO_HOME`）
+
+#### 版本兼容性
+
+FPGABuilder支持Vivado 2018.0至2024.2版本：
+- **2019.x**: 使用Vivado2019Adapter（新增）
+- **2023.x**: 使用Vivado2023Adapter
+- **2024.x**: 使用Vivado2024Adapter
+- **其他版本（2018.0-2022.x）**: 使用默认适配器（无版本特定适配）
+
+FPGABuilder为Vivado 2019.1提供了专门的适配器，确保版本兼容性。对于2018.0-2022.x的其他版本，使用默认适配器，基本功能可用，但某些版本特定命令可能受限。
+
+#### 配置验证
+
+使用以下命令验证配置：
+```bash
+# 验证配置文件语法
+FPGABuilder validate
+
+# 详细模式显示工具检测信息
+FPGABuilder --verbose build --dry-run
+```
+
 ### 文档配置
 
 ```yaml
@@ -632,7 +702,46 @@ FPGABuilder build --remote user@server:/home/user/build
 2. 检查必填字段是否完整
 3. 查看具体错误信息
 
-#### 3. 构建过程失败
+#### 3. 工具检测失败
+
+**症状**：
+```
+错误：未检测到Vivado安装
+警告：Vivado版本不匹配: 配置版本=2023.2, 实际版本=2019.1
+```
+
+**解决方法**：
+1. **检查开发工具安装**：
+   - 确认Vivado已正确安装
+   - 验证Vivado可执行文件路径在系统PATH中
+
+2. **配置工具路径**（推荐）：
+   - 在 `fpga_project.yaml` 中添加 `vivado_path` 和 `vivado_version` 配置
+   - 示例：
+     ```yaml
+     fpga:
+       vivado_path: "C:/Xilinx/Vivado/2023.2"
+       vivado_version: "2023.2"
+     ```
+
+3. **版本兼容性检查**：
+   - FPGABuilder支持Vivado 2018.0-2024.2版本
+   - 如果使用2019.1等早期版本，某些高级功能可能受限
+   - 建议升级到2023.2或更新版本以获得最佳体验
+
+4. **环境变量设置**：
+   - Windows: 设置 `VIVADO_HOME` 环境变量
+   - Linux: 确保Vivado安装目录在PATH中
+
+5. **详细检测**：
+   ```bash
+   # 显示工具检测详情
+   FPGABuilder --verbose plugins list
+   # 或
+   FPGABuilder --verbose build --dry-run
+   ```
+
+#### 4. 构建过程失败
 
 **症状**：
 

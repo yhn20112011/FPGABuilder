@@ -939,6 +939,40 @@ class Vivado2023Adapter(VersionAdapter):
         return output
 
 
+class Vivado2019Adapter(VersionAdapter):
+    """Vivado 2019.x适配器"""
+
+    def adapt_command(self, command: List[str]) -> List[str]:
+        """适配命令参数"""
+        # Vivado 2019.x命令参数
+        adapted_command = command.copy()
+        if "vivado" in command[0]:
+            # 确保使用批处理模式
+            if "-mode" not in command:
+                adapted_command.append("-mode")
+                adapted_command.append("batch")
+        return adapted_command
+
+    def adapt_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """适配配置"""
+        adapted_config = config.copy()
+
+        # Vivado 2019.x特定的配置适配
+        build_config = adapted_config.get('build', {})
+        synthesis_config = build_config.get('synthesis', {})
+
+        # 设置2019.x推荐的综合策略
+        if 'strategy' not in synthesis_config:
+            synthesis_config['strategy'] = 'Vivado Synthesis 2019'
+
+        return adapted_config
+
+    def adapt_output(self, output: str) -> str:
+        """适配输出解析"""
+        # Vivado 2019.x的输出格式处理
+        return output
+
+
 class Vivado2024Adapter(VersionAdapter):
     """Vivado 2024.x适配器"""
 
@@ -980,5 +1014,6 @@ class Vivado2024Adapter(VersionAdapter):
 
 
 # 注册版本适配器
+VersionAdapterRegistry.register("vivado", r"2019\..*", Vivado2019Adapter)
 VersionAdapterRegistry.register("vivado", r"2023\..*", Vivado2023Adapter)
 VersionAdapterRegistry.register("vivado", r"2024\..*", Vivado2024Adapter)
