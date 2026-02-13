@@ -105,6 +105,8 @@ class BDRecoveryTemplate(TCLTemplateBase):
         self.auto_wrapper = bd_config.get('auto_wrapper', True)
         self.generate_wrapper = bd_config.get('generate_wrapper', True)
         self.wrapper_language = bd_config.get('wrapper_language', 'verilog')
+        # 获取项目目录
+        self.project_dir = config.get('project_dir', './build')
 
     def render(self) -> str:
         """渲染BD恢复模板"""
@@ -133,33 +135,158 @@ class BDRecoveryTemplate(TCLTemplateBase):
         if self.generate_wrapper:
             lines.append('# 生成Block Design包装器')
             if self.auto_wrapper:
-                lines.append('make_wrapper -files [get_files [current_bd_design]] -top')
+                # 获取BD名称
+                lines.append('# 获取BD名称')
+                lines.append('set bd_name [current_bd_design]')
+                lines.append('set bd_file [get_files [current_bd_design]]')
+                lines.append(f'set project_name "{self.project_name}"')
+                lines.append(f'set project_dir "{self.project_dir}"')
                 lines.append('')
 
-                # 获取生成的包装器文件
-                lines.append('# 获取生成的包装器文件')
-                lines.append(f'set wrapper_file [get_files -of_objects [get_files [current_bd_design]] -filter {{FILE_TYPE == "Verilog" || FILE_TYPE == "VHDL"}}]')
-                lines.append('if {[llength $wrapper_file] > 0} {')
-                lines.append('    set top_module [file rootname [file tail [lindex $wrapper_file 0]]]')
-                lines.append(f'    set_property top $top_module [current_fileset]')
-                lines.append('    puts "自动生成包装器: $top_module"')
+                # 用户脚本风格：按照手动开发常用流程
+
+
+                lines.append('# 按照手动开发常用流程生成HDL包装器')
+
+
+                lines.append('puts "开始生成HDL包装器..."')
+
+
+                lines.append('update_compile_order -fileset sources_1')
+
+
+                lines.append('puts "编译顺序已更新"')
+
+
+                lines.append('')
+
+
+                lines.append('puts "生成BD目标文件..."')
+
+
+                lines.append('generate_target all $bd_file')
+
+
+                lines.append('puts "BD目标文件生成完成"')
+
+
+                lines.append('')
+
+
+                lines.append('puts "生成HDL包装器..."')
+
+
+                lines.append('make_wrapper -files $bd_file -top')
+
+
+                lines.append('puts "HDL包装器生成命令执行完成"')
+
+
+                lines.append('')
+
+
+                lines.append('# 构建包装器文件路径并添加')
+
+
+                lines.append('set wrapper_path [file join $project_dir "${project_name}.srcs" "sources_1" "bd" $bd_name "hdl" "${bd_name}_wrapper.v"]')
+
+
+                lines.append('puts "包装器文件路径: $wrapper_path"')
+
+
+                lines.append('# 等待文件生成')
+
+
+                lines.append('after 2000')
+
+
+                lines.append('if {[file exists $wrapper_path]} {')
+
+
+                lines.append('    add_files -norecurse $wrapper_path')
+
+
+                lines.append('    puts "已添加包装器文件: $wrapper_path"')
+
+
                 lines.append('} else {')
-                lines.append(f'    # 手动创建包装器')
-                lines.append(f'    create_bd_cell -type hier {self.wrapper_name}')
-                lines.append(f'    set_property top {self.wrapper_name} [current_fileset]')
+
+
+                lines.append('    puts "警告: 包装器文件不存在，尝试通过get_files查找..."')
+
+
+                lines.append('    set wrapper_files [get_files -filter {NAME =~ "*wrapper*" && (FILE_TYPE == "Verilog" || FILE_TYPE == "VHDL")}]')
+
+
+                lines.append('    if {[llength $wrapper_files] == 0} {')
+
+
+                lines.append('        set wrapper_files [get_files -of_objects $bd_file -filter {NAME =~ "*wrapper*" && (FILE_TYPE == "Verilog" || FILE_TYPE == "VHDL")}]')
+
+
+                lines.append('    }')
+
+
+                lines.append('    if {[llength $wrapper_files] > 0} {')
+
+
+                lines.append('        puts "找到包装器文件: $wrapper_files"')
+
+
+                lines.append('        add_files -norecurse [lindex $wrapper_files 0]')
+
+
+                lines.append('        puts "已添加Vivado生成的包装器文件"')
+
+
+                lines.append('    } else {')
+
+
+                lines.append('        puts "错误: 包装器文件生成失败，检查Vivado日志"')
+
+
+                lines.append('    }')
+
+
                 lines.append('}')
+
+
+                lines.append('')
+
+
+                lines.append('update_compile_order -fileset sources_1')
+
+
+                lines.append('')
+
+
+                lines.append('set_property top ${bd_name}_wrapper [current_fileset]')
+
+
+                lines.append('')
+
+
+                lines.append('update_compile_order -fileset sources_1')
+
+
+                lines.append('')
             else:
                 # 手动设置包装器
                 lines.append(f'# 手动设置顶层模块: {self.wrapper_name}')
                 lines.append(f'set_property top {self.wrapper_name} [current_fileset]')
-
-            lines.append('')
+                lines.append('')
 
         # 如果BD是顶层，设置顶层模块
         if self.is_top:
-            lines.append('# 设置Block Design为顶层')
-            lines.append(f'set_property top [current_bd_design] [current_fileset]')
-            lines.append('')
+            # 如果已经生成了包装器并设置为顶层，则不需要再设置BD为顶层
+            # 包装器已经是顶层模块，BD是顶层设计
+            if not (self.generate_wrapper and self.auto_wrapper):
+                lines.append('# 设置Block Design为顶层')
+                lines.append(f'set_property top [current_bd_design] [current_fileset]')
+                lines.append('')
+            else:
+                lines.append('# Block Design是顶层设计，包装器已设置为顶层模块')
+                lines.append('')
 
         return '\n'.join(lines)
 
