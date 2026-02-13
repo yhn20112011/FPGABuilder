@@ -37,6 +37,86 @@ class CLI:
         # 使用Click实现命令行解析
         cli()
 
+    @staticmethod
+    def _execute_hook(hook_config, hook_name):
+        """执行钩子命令并处理错误"""
+        import subprocess
+        import shutil
+        from pathlib import Path
+
+        if not hook_config:
+            return True  # 无钩子配置，继续
+
+        click.echo(f"执行 {hook_name} 钩子...")
+
+        # 支持字符串或字符串数组
+        if isinstance(hook_config, list):
+            commands = hook_config
+        else:
+            # 字符串，按换行符分割，过滤空行
+            commands = [cmd.strip() for cmd in str(hook_config).split('\n') if cmd.strip()]
+
+        for cmd in commands:
+            click.echo(f"  运行: {cmd}")
+
+            # 检查是否为文件路径
+            cmd_path = Path(cmd)
+            if cmd_path.exists() and cmd_path.is_file():
+                # 如果是脚本文件，根据扩展名决定如何执行
+                if cmd_path.suffix in ['.py', '.pyw']:
+                    # Python脚本
+                    full_cmd = [sys.executable, str(cmd_path)]
+                elif cmd_path.suffix in ['.sh', '.bash']:
+                    # Shell脚本
+                    if os.name == 'nt':
+                        full_cmd = ['bash', str(cmd_path)]
+                    else:
+                        full_cmd = ['bash', str(cmd_path)]
+                elif cmd_path.suffix in ['.tcl']:
+                    # TCL脚本，通过Vivado执行？这里简单使用source命令
+                    # 实际应该在Vivado环境中执行，这里跳过文件检查
+                    click.echo(f"  警告: TCL脚本应在Vivado环境中执行，跳过")
+                    continue
+                else:
+                    # 其他文件，尝试作为可执行文件
+                    full_cmd = [str(cmd_path)]
+            else:
+                # 直接命令
+                # 在Windows上使用shell=True，以便支持内部命令
+                full_cmd = cmd
+                shell = True
+
+            try:
+                # 执行命令
+                if isinstance(full_cmd, list):
+                    # 列表形式，使用subprocess.run
+                    result = subprocess.run(full_cmd, capture_output=True, text=True, shell=False)
+                else:
+                    # 字符串形式，使用shell
+                    result = subprocess.run(full_cmd, capture_output=True, text=True, shell=True)
+
+                if result.returncode != 0:
+                    click.echo(f"  错误: 钩子命令执行失败 (退出码: {result.returncode})")
+                    click.echo(f"  标准输出: {result.stdout}")
+                    click.echo(f"  标准错误: {result.stderr}")
+
+                    # 询问用户是否继续
+                    if not click.confirm(f"{hook_name} 钩子执行失败，是否继续构建？", default=False):
+                        return False
+                    else:
+                        click.echo("  用户选择继续构建")
+                else:
+                    click.echo(f"  成功: {result.stdout}")
+
+            except Exception as e:
+                click.echo(f"  异常: 执行钩子命令时出错: {e}")
+                if not click.confirm(f"{hook_name} 钩子执行出错，是否继续构建？", default=False):
+                    return False
+                else:
+                    click.echo("  用户选择继续构建")
+
+        return True  # 继续构建
+
 
 # Click命令组
 @click.group()
@@ -291,6 +371,14 @@ def build(ctx, target, jobs):
         click.echo(f"[ERROR] 不支持的FPGA厂商: {vendor}")
         return
 
+    # 执行pre-build钩子（如果有）
+    hooks = config.get('build', {}).get('hooks', {})
+    pre_build_hook = hooks.get('pre_build')
+    if pre_build_hook:
+        if not CLI._execute_hook(pre_build_hook, 'pre-build'):
+            click.echo("构建被用户取消")
+            return
+
     # 获取插件（临时直接实例化Vivado插件，避免插件发现问题）
     plugin = None
     if vendor == 'xilinx':
@@ -321,6 +409,11 @@ def build(ctx, target, jobs):
                 click.echo("[ERROR] 比特流生成失败")
                 return
             click.echo("[OK] 构建完成")
+            # 执行post-bitstream钩子（如果有）
+            post_bitstream_hook = hooks.get('post_bitstream')
+            if post_bitstream_hook:
+                if not CLI._execute_hook(post_bitstream_hook, 'post-bitstream'):
+                    click.echo("警告: post-bitstream钩子执行失败，但构建已完成")
         elif target == 'synth':
             click.echo("运行综合...")
             result = plugin.synthesize(config)
@@ -340,6 +433,11 @@ def build(ctx, target, jobs):
             result = plugin.generate_bitstream(config)
             if result.success:
                 click.echo("[OK] 比特流生成完成")
+                # 执行post-bitstream钩子（如果有）
+                post_bitstream_hook = hooks.get('post_bitstream')
+                if post_bitstream_hook:
+                    if not CLI._execute_hook(post_bitstream_hook, 'post-bitstream'):
+                        click.echo("警告: post-bitstream钩子执行失败，但构建已完成")
             else:
                 click.echo("[ERROR] 比特流生成失败")
     except Exception as e:

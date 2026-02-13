@@ -32,14 +32,25 @@ class TCLTemplateBase:
         if not hook_script:
             return []
 
-        # 检查是脚本文件还是直接命令
-        hook_path = Path(hook_script)
-        if hook_path.exists() and hook_path.is_file():
-            # 是脚本文件，使用source命令
-            return [f'source {{{hook_script}}}']
+        commands = []
+        # 支持字符串或字符串数组
+        if isinstance(hook_script, list):
+            script_items = hook_script
         else:
-            # 可能是直接命令
-            return [hook_script]
+            # 字符串，按换行符分割，过滤空行
+            script_items = [line.strip() for line in str(hook_script).split('\n') if line.strip()]
+
+        for item in script_items:
+            # 检查是脚本文件还是直接命令
+            hook_path = Path(item)
+            if hook_path.exists() and hook_path.is_file():
+                # 是脚本文件，使用source命令
+                commands.append(f'source {{{item}}}')
+            else:
+                # 直接命令
+                commands.append(item)
+
+        return commands
 
     def _execute_hook(self, hook_name: str, tcl_script_lines: List[str]):
         """执行钩子脚本"""
@@ -169,6 +180,9 @@ class BuildFlowTemplate(TCLTemplateBase):
             '# Vivado构建流程脚本',
             ''
         ]
+
+        # 构建前钩子
+        self._execute_hook('pre_build', lines)
 
         # 综合前钩子
         self._execute_hook('pre_synth', lines)

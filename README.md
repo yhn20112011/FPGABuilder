@@ -247,6 +247,23 @@ build:
     opt_design: true
     place_design: true
     route_design: true
+  hooks:
+    pre_build: |
+      echo "构建开始前执行的命令"
+      echo "可以执行环境检查、依赖下载等"
+    pre_synth: "scripts/pre_synth.tcl"
+    post_synth: "echo '综合完成'"
+    pre_impl: |
+      echo "实现前命令1"
+      echo "实现前命令2"
+    post_impl: "scripts/post_impl.py"
+    post_bitstream: |
+      echo "比特流生成后执行的命令"
+      echo "可以复制比特流文件、发送通知等"
+    bin_merge_script: "scripts/merge_bin.py"
+    custom_scripts:
+      custom1: "scripts/custom1.tcl"
+      custom2: "scripts/custom2.py"
 ```
 
 ## 命令行参考

@@ -268,25 +268,47 @@ class ConfigManager:
                         "hooks": {
                             "type": "object",
                             "properties": {
+                                "pre_build": {
+                                    "oneOf": [
+                                        {"type": "string", "description": "构建前脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "构建前命令列表"}
+                                    ],
+                                    "description": "构建前脚本路径或命令（可多行）"
+                                },
                                 "pre_synth": {
-                                    "type": "string",
-                                    "description": "综合前脚本路径或命令"
+                                    "oneOf": [
+                                        {"type": "string", "description": "综合前脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "综合前命令列表"}
+                                    ],
+                                    "description": "综合前脚本路径或命令（可多行）"
                                 },
                                 "post_synth": {
-                                    "type": "string",
-                                    "description": "综合后脚本路径或命令"
+                                    "oneOf": [
+                                        {"type": "string", "description": "综合后脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "综合后命令列表"}
+                                    ],
+                                    "description": "综合后脚本路径或命令（可多行）"
                                 },
                                 "pre_impl": {
-                                    "type": "string",
-                                    "description": "实现前脚本路径或命令"
+                                    "oneOf": [
+                                        {"type": "string", "description": "实现前脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "实现前命令列表"}
+                                    ],
+                                    "description": "实现前脚本路径或命令（可多行）"
                                 },
                                 "post_impl": {
-                                    "type": "string",
-                                    "description": "实现后脚本路径或命令"
+                                    "oneOf": [
+                                        {"type": "string", "description": "实现后脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "实现后命令列表"}
+                                    ],
+                                    "description": "实现后脚本路径或命令（可多行）"
                                 },
                                 "post_bitstream": {
-                                    "type": "string",
-                                    "description": "比特流生成后脚本路径或命令"
+                                    "oneOf": [
+                                        {"type": "string", "description": "比特流生成后脚本路径或命令"},
+                                        {"type": "array", "items": {"type": "string"}, "description": "比特流生成后命令列表"}
+                                    ],
+                                    "description": "比特流生成后脚本路径或命令（可多行）"
                                 },
                                 "bin_merge_script": {
                                     "type": "string",

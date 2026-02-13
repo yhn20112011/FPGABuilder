@@ -40,6 +40,14 @@ build:
   bitstream:
     options: {}
 
+  hooks:
+    pre_build: |
+      echo "Pre-build hook executed"
+      echo "Current directory: $(pwd)"
+    post_bitstream: |
+      echo "Post-bitstream hook executed"
+      echo "Bitstream generation completed"
+
   bin_merge:
     enabled: true
     output_path: "build/boot.bin"
