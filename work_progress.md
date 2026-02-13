@@ -1031,3 +1031,92 @@ FPGABuilder gui
   - `src/plugins/vivado/plugin.py` - 添加Vivado2019Adapter并注册
   - `work_progress.md` - 更新工作记录
 - **提交消息**：添加开发工具路径配置说明和Vivado 2019.1适配器
+
+### 2026-02-13: 修复GUI命令以自动打开开发工具界面
+
+#### 问题分析
+用户反馈FPGABuilder gui命令只生成工程但无法自动打开开发工具界面。分析原因：
+
+1. **根本原因**：`prepare_and_open_gui` 方法使用 `_run_vivado_tcl` 执行TCL脚本，后者默认使用批处理模式 (`-mode batch`)
+2. **影响**：即使TCL脚本中包含GUI打开命令 (`start_gui`)，批处理模式下Vivado不会打开GUI窗口
+3. **设计缺陷**：`generate_gui_preparation_script` 生成的脚本包含GUI命令，但执行模式不匹配
+
+#### 解决方案
+采用两阶段方案：先批处理模式准备工程，再GUI模式打开工程
+
+##### 1. 新增准备脚本生成方法
+- **位置**：`src/plugins/vivado/tcl_templates.py`
+- **方法**：`generate_preparation_script_without_gui()`
+- **功能**：生成工程创建、文件导入、BD恢复脚本，但不包含GUI命令
+- **复用**：复用现有模板组件，确保一致性
+
+##### 2. 修改GUI准备流程
+- **位置**：`src/plugins/vivado/plugin.py`
+- **方法**：`prepare_and_open_gui()` 重构
+- **新流程**：
+  1. 使用新方法生成准备脚本（不含GUI）
+  2. 批处理模式执行脚本，创建工程
+  3. 成功后在GUI模式下调用 `open_gui()` 方法
+  4. 合并构建结果，提供完整反馈
+
+##### 3. 保持向后兼容性
+- **保留**：原有的 `generate_gui_preparation_script()` 方法
+- **新增**：专用方法用于无GUI的工程准备
+- **灵活**：可根据需要选择不同方法
+
+#### 技术实现详情
+
+##### TCL模板修改
+```python
+def generate_preparation_script_without_gui(self, file_scanner_results=None) -> str:
+    """生成准备脚本（创建工程、添加文件、恢复BD，但不包含GUI命令）"""
+    script_parts = []
+    # 基本工程创建、文件添加、BD恢复、顶层模块设置
+    return '\n'.join(script_parts)
+```
+
+##### Vivado插件修改
+```python
+def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
+    # ... 初始化检查、文件扫描
+
+    # 使用新方法生成脚本
+    tcl_script = generator.generate_preparation_script_without_gui(scan_result['scanned_files'])
+
+    # 批处理模式创建工程
+    result = self._run_vivado_tcl(tcl_script, "prepare_gui.tcl")
+
+    if result.success:
+        # 工程创建成功，打开GUI
+        gui_result = self.open_gui(config)
+        # 合并结果...
+
+    return result
+```
+
+#### 构建与安装验证
+1. **语法检查**：通过 `python -m py_compile` 验证修改文件语法
+2. **工具链构建**：运行 `python setup.py bdist_wheel` 成功生成wheel包
+3. **安装测试**：使用 `pip install dist/FPGABuilder-0.2.0-py3-none-any.whl --force-reinstall` 成功安装
+4. **命令验证**：`FPGABuilder gui --help` 正确显示帮助信息
+
+#### 预期效果
+✅ **工程准备阶段**：批处理模式快速创建工程，避免GUI阻塞
+✅ **GUI打开阶段**：以GUI模式打开Vivado，显示准备好的工程
+✅ **用户体验**：用户看到完整的Vivado GUI界面，工程已就绪
+✅ **错误处理**：工程创建失败时不会尝试打开GUI
+
+#### 测试计划
+1. **单元测试**：验证新方法生成正确的TCL脚本
+2. **集成测试**：在真实Vivado环境中测试完整流程
+3. **回滚测试**：确保修改不影响其他功能（如build、synth等命令）
+
+#### 修改文件
+- `src/plugins/vivado/tcl_templates.py` - 添加 `generate_preparation_script_without_gui()` 方法
+- `src/plugins/vivado/plugin.py` - 修改 `prepare_and_open_gui()` 方法
+- `work_progress.md` - 更新工作记录
+
+#### 下一步
+1. **实际环境测试**：在安装Vivado的环境中验证GUI打开功能
+2. **错误处理增强**：添加更详细的错误信息和恢复机制
+3. **用户反馈收集**：根据用户使用情况进一步优化流程
