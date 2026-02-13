@@ -628,3 +628,45 @@ wheel包构建完成
   - `work_progress.md` - 更新工作记录
 
 - **测试文件保留**：调试脚本和日志文件未提交，保持仓库整洁
+
+## 2026-02-13 11:30:00
+
+### 修复比特流生成问题并添加Block Design文档
+
+#### 已完成
+
+1. ✅ **修复比特流生成问题**：
+   - 改进比特流文件检查逻辑，改为检查文件是否存在而非进度百分比
+   - 合并比特流文件检查和复制逻辑，避免重复代码
+   - 保留reset_run命令的catch包装以防止错误
+   - 提交哈希：169d2bc
+
+2. ✅ **完善Block Design支持文档**：
+   - Block Design功能已存在于代码库中（BDRecoveryTemplate类）
+   - 在用户指南中添加"Block Design支持"章节
+   - 提供配置示例和使用说明
+   - 说明工作流程：source system.tcl → make_wrapper → 设置顶层模块
+
+3. ✅ **提交所有更改**到git仓库
+
+#### Block Design功能说明
+
+FPGABuilder已支持Vivado Block Design工作流：
+
+- **配置参数**：`source.block_design.tcl_script`（或`bd_file`）
+- **自动包装器生成**：`generate_wrapper: true` 启用 `make_wrapper`
+- **顶层设置**：`is_top: true` 将BD设置为顶层设计
+- **工作流程**：工程创建 → 源文件导入 → IP库设置 → BD恢复 → 包装器生成 → 构建流程
+
+#### 当前状态
+
+- 比特流生成逻辑已修复，等待进一步测试
+- Block Design功能已文档化，用户可参考使用
+- 工具链基本功能完整，支持多模块工程、Zynq模板、Block Design等
+
+#### 后续建议
+
+1. 创建Block Design示例工程进行功能验证
+2. 测试比特流生成修复效果
+3. 完善开发者指南中的构建安装包说明
+4. 添加更多工程模板（针对不同开发板）

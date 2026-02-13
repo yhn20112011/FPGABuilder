@@ -726,6 +726,35 @@ FPGABuilder build --dry-run
 - 在GitHub Issues报告问题
 - 参与社区讨论
 
+## Block Design支持
+
+FPGABuilder支持Vivado Block Design (BD) 工作流。您可以使用以下配置来集成Block Design：
+
+```yaml
+source:
+  block_design:
+    tcl_script: "bd/system.tcl"   # 从Vivado导出的TCL脚本，用于恢复BD设计
+    is_top: true                  # BD是否为顶层设计
+    generate_wrapper: true        # 自动生成包装器 (make_wrapper)
+    wrapper_language: "verilog"   # 包装器语言 (verilog/vhdl)
+    # 可选：如果已有.bd文件，可以直接指定：
+    # bd_file: "bd/system.bd"
+```
+
+**工作流程**：
+1. FPGABuilder创建工程并导入源文件
+2. 设置IP库路径 (ip_repo)
+3. 执行 `source system.tcl` 恢复BD设计
+4. 自动生成包装器：`make_wrapper -files [get_files [current_bd_design]] -top`
+5. 设置顶层模块为生成的包装器
+6. 继续构建流程（综合、实现、比特流生成）
+
+**注意事项**：
+- 确保TCL脚本包含完整的BD创建命令
+- 如果使用`bd_file`而不是`tcl_script`，FPGABuilder会直接加载.bd文件
+- `is_top: true` 将BD设置为顶层设计
+- 包装器生成后，顶层模块会自动设置为包装器模块
+
 ## 更新日志
 
 各版本更新内容请参阅[CHANGELOG.md](../CHANGELOG.md)。
