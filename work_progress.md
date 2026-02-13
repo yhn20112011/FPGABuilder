@@ -560,32 +560,33 @@ wheel包构建完成
 
 ### 测试生成比特流并更新工程模板
 
-根据用户要求，在`test_zynq_proj`中测试生成比特流，并根据示例源码更新工具链的工程模板生成代码。
+根据用户要求，在 `test_zynq_proj`中测试生成比特流，并根据示例源码更新工具链的工程模板生成代码。
 
 #### 已完成
 
 1. ✅ **测试比特流生成**：
-   - 在test_zynq_proj中运行`vivado bitstream`命令
-   - 比特流文件成功生成在`build/my_zynq_project.runs/impl_1/my_zynq_project_top.bit`
+
+   - 在test_zynq_proj中运行 `vivado bitstream`命令
+   - 比特流文件成功生成在 `build/my_zynq_project.runs/impl_1/my_zynq_project_top.bit`
    - 比特流生成成功但脚本报告失败，需要进一步调试进度检查逻辑
-
 2. ✅ **修复比特流生成问题**：
-   - 修复`open_project`命令缺少`.xpr`扩展名问题
-   - 调整`BITSTREAM.OUTPUT_DIR`设置，避免空值错误
-   - 修复`reset_run`参数，使用`-from_step route_design`
-   - 比特流实际生成成功，但脚本进度检查仍需优化
 
+   - 修复 `open_project`命令缺少 `.xpr`扩展名问题
+   - 调整 `BITSTREAM.OUTPUT_DIR`设置，避免空值错误
+   - 修复 `reset_run`参数，使用 `-from_step route_design`
+   - 比特流实际生成成功，但脚本进度检查仍需优化
 3. ✅ **更新Zynq工程模板**：
-   - 根据test_zynq_proj示例更新`project.py`中的`_create_zynq_template_files`方法
+
+   - 根据test_zynq_proj示例更新 `project.py`中的 `_create_zynq_template_files`方法
    - 生成更简单的设计（数据流水线寄存器，类似示例）
    - 提供最小约束文件示例，包含DRC严重性降低指令
    - 移除具体的引脚约束，提供注释示例
-
 4. ✅ **改进清理功能**：
-   - 修改`CleanTemplate`以递归删除`*.jou`和`*.log`文件
-   - 使用`glob`命令匹配多级目录中的文件
 
+   - 修改 `CleanTemplate`以递归删除 `*.jou`和 `*.log`文件
+   - 使用 `glob`命令匹配多级目录中的文件
 5. ✅ **提交git修改**：
+
    - 提交哈希：036b9b0
    - 提交消息："修复比特流生成问题和更新Zynq工程模板"
 
@@ -599,15 +600,16 @@ wheel包构建完成
 #### 验证结果
 
 1. **比特流文件验证**：
+
    ```
    build/my_zynq_project.runs/impl_1/my_zynq_project_top.bit (13,321,519字节)
    ```
-
 2. **模板更新验证**：
+
    - 新创建的Zynq项目将生成简化设计
    - 约束文件包含最小约束和DRC处理
-
 3. **清理功能验证**：
+
    - TCL脚本已更新为递归删除
    - 需要修复clean命令的项目打开问题
 
@@ -621,12 +623,12 @@ wheel包构建完成
 #### 提交记录
 
 - **修改文件**：
+
   - `src/core/project.py` - 更新Zynq模板生成代码
   - `src/plugins/vivado/plugin.py` - 修复open_project扩展名
   - `src/plugins/vivado/tcl_templates.py` - 修复比特流和清理模板
   - `test_zynq_proj/fpga_project.yaml` - 测试配置调整
   - `work_progress.md` - 更新工作记录
-
 - **测试文件保留**：调试脚本和日志文件未提交，保持仓库整洁
 
 ## 2026-02-13 11:30:00
@@ -636,24 +638,24 @@ wheel包构建完成
 #### 已完成
 
 1. ✅ **修复比特流生成问题**：
+
    - 改进比特流文件检查逻辑，改为检查文件是否存在而非进度百分比
    - 合并比特流文件检查和复制逻辑，避免重复代码
    - 保留reset_run命令的catch包装以防止错误
    - 提交哈希：169d2bc
-
 2. ✅ **完善Block Design支持文档**：
+
    - Block Design功能已存在于代码库中（BDRecoveryTemplate类）
    - 在用户指南中添加"Block Design支持"章节
    - 提供配置示例和使用说明
    - 说明工作流程：source system.tcl → make_wrapper → 设置顶层模块
-
 3. ✅ **提交所有更改**到git仓库
 
 #### Block Design功能说明
 
 FPGABuilder已支持Vivado Block Design工作流：
 
-- **配置参数**：`source.block_design.tcl_script`（或`bd_file`）
+- **配置参数**：`source.block_design.tcl_script`（或 `bd_file`）
 - **自动包装器生成**：`generate_wrapper: true` 启用 `make_wrapper`
 - **顶层设置**：`is_top: true` 将BD设置为顶层设计
 - **工作流程**：工程创建 → 源文件导入 → IP库设置 → BD恢复 → 包装器生成 → 构建流程
@@ -676,39 +678,46 @@ FPGABuilder已支持Vivado Block Design工作流：
 ### 修复比特流检查逻辑问题
 
 #### 问题分析
+
 从测试输出发现：比特流实际生成成功（文件存在），但FPGABuilder报告失败。分析原因：
+
 1. 比特流文件检查逻辑可能不完善（路径或glob模式问题）
 2. TCL脚本中某些命令失败导致整体返回码非零
 3. 文件复制操作可能失败
 
 #### 修复方案
+
 修改 `src/plugins/vivado/tcl_templates.py`：
 
 1. **改进BITSTREAM.OUTPUT_DIR设置**：
-   - 取消注释设置，添加错误处理
-   - 使用`catch`包装，避免因设计/运行不存在而失败
 
+   - 取消注释设置，添加错误处理
+   - 使用 `catch`包装，避免因设计/运行不存在而失败
 2. **增强比特流文件检查**：
+
    - 添加调试信息输出运行目录
    - 如果运行目录找不到文件，检查当前目录
    - 更详细的成功/失败消息
-
 3. **改进文件复制逻辑**：
-   - 使用`catch`包装文件复制操作
+
+   - 使用 `catch`包装文件复制操作
    - 记录复制成功/失败状态
    - 即使部分文件复制失败也不中止脚本
 
 #### 修改内容
+
 1. BITSTREAM.OUTPUT_DIR设置添加条件检查和错误处理
 2. 比特流检查逻辑扩展为检查多个目录
 3. 文件复制操作添加异常捕获和状态跟踪
 
 #### 预期效果
+
 - 比特流生成成功时正确报告成功
 - 文件复制失败时提供警告而非错误
 - 更健壮的构建流程容错能力
 
 #### 待测试
+
 1. 运行完整构建流程验证修复效果
 2. 测试比特流单独生成命令
 3. 验证文件复制到输出目录功能
@@ -727,15 +736,15 @@ FPGABuilder已支持Vivado Block Design工作流：
 
 #### 当前状态分析
 
-| 功能模块 | 状态 | 详细说明 |
-|---------|------|----------|
-| **工程创建** | ✅ 正常 | 支持多模板，自动生成源文件和约束 |
-| **文件扫描** | ✅ 正常 | 自动扫描HDL、约束、IP文件 |
-| **综合实现** | ✅ 正常 | Vivado 2018.2验证通过 |
-| **比特流生成** | ⚠️ **部分正常** | 文件实际生成成功，但脚本返回失败代码 |
-| **Block Design** | ✅ 已支持 | 支持TCL脚本和.bd文件恢复，自动生成包装器 |
-| **二进制打包** | ⚠️ 需要测试 | 依赖比特流生成结果 |
-| **清理功能** | ⚠️ 需要验证 | 已支持递归删除*.jou/*.log |
+| 功能模块               | 状态                   | 详细说明                                 |
+| ---------------------- | ---------------------- | ---------------------------------------- |
+| **工程创建**     | ✅ 正常                | 支持多模板，自动生成源文件和约束         |
+| **文件扫描**     | ✅ 正常                | 自动扫描HDL、约束、IP文件                |
+| **综合实现**     | ✅ 正常                | Vivado 2018.2验证通过                    |
+| **比特流生成**   | ⚠️**部分正常** | 文件实际生成成功，但脚本返回失败代码     |
+| **Block Design** | ✅ 已支持              | 支持TCL脚本和.bd文件恢复，自动生成包装器 |
+| **二进制打包**   | ⚠️ 需要测试          | 依赖比特流生成结果                       |
+| **清理功能**     | ⚠️ 需要验证          | 已支持递归删除*.jou/*.log                |
 
 #### 比特流生成问题根源
 
@@ -744,26 +753,27 @@ FPGABuilder已支持Vivado Block Design工作流：
    - 文件检查逻辑仍不完善
    - 文件复制操作失败
    - reset_run或launch_runs命令错误
-3. **文件复制失败**：比特流文件未复制到`build/bitstreams`目录
+3. **文件复制失败**：比特流文件未复制到 `build/bitstreams`目录
 
 #### 建议后续步骤
 
 1. **深入调试比特流脚本**：
+
    - 查看临时TCL脚本内容验证修复是否生效
    - 添加更详细的调试输出定位具体失败点
    - 测试文件复制逻辑单独执行
-
 2. **创建端到端测试**：
+
    - 在clean环境中运行完整构建流程
    - 验证所有输出文件位置和完整性
    - 测试Block Design示例工程
-
 3. **完善开发者文档**：
+
    - 添加构建安装包详细说明
    - 记录常见问题解决方法
    - 提供插件开发指南
-
 4. **持续集成优化**：
+
    - 添加自动化构建测试
    - 监控构建成功率和性能
    - 建立问题快速诊断机制
@@ -782,40 +792,43 @@ FPGABuilder已支持Vivado Block Design工作流：
 ### 添加GUI命令功能
 
 #### 任务要求
-在FPGABuilder中增加一个命令`gui`，用于打开工作区、导入相关源文件、恢复BD等，准备好一切并运行指定的厂商开发工具的界面，而不进行后续综合。测试完成后顺便测试工具链的构建并安装好，防止新加命令影响工具链构建脚本。
+
+在FPGABuilder中增加一个命令 `gui`，用于打开工作区、导入相关源文件、恢复BD等，准备好一切并运行指定的厂商开发工具的界面，而不进行后续综合。测试完成后顺便测试工具链的构建并安装好，防止新加命令影响工具链构建脚本。
 
 #### 已完成
 
 1. ✅ **分析现有代码结构**：
+
    - 探索了FPGABuilder项目结构，了解现有命令、工具链构建脚本、厂商开发工具集成情况
-   - 分析了现有`vivado gui`命令的实现，发现它仅打开现有工程，不创建或准备工程
-
+   - 分析了现有 `vivado gui`命令的实现，发现它仅打开现有工程，不创建或准备工程
 2. ✅ **扩展TCL模板系统**：
-   - 在`src/plugins/vivado/tcl_templates.py`的`TCLScriptGenerator`类中添加`generate_gui_preparation_script`方法
+
+   - 在 `src/plugins/vivado/tcl_templates.py`的 `TCLScriptGenerator`类中添加 `generate_gui_preparation_script`方法
    - 该方法生成GUI准备脚本：创建工程、添加文件、恢复BD、设置顶层模块、打开GUI，但不运行构建流程
-
 3. ✅ **扩展Vivado插件**：
-   - 在`src/plugins/vivado/plugin.py`的`VivadoPlugin`类中添加`prepare_and_open_gui`方法
+
+   - 在 `src/plugins/vivado/plugin.py`的 `VivadoPlugin`类中添加 `prepare_and_open_gui`方法
    - 该方法扫描文件、生成GUI准备脚本、执行TCL脚本，完成工程准备并打开GUI
-
 4. ✅ **添加顶层GUI命令**：
-   - 在`src/core/cli.py`中添加新的`@cli.command()`装饰的`gui`函数
-   - 命令功能：加载配置、根据vendor获取插件、调用`prepare_and_open_gui`方法
-   - 目前支持Xilinx Vivado，其他厂商可后续扩展
 
+   - 在 `src/core/cli.py`中添加新的 `@cli.command()`装饰的 `gui`函数
+   - 命令功能：加载配置、根据vendor获取插件、调用 `prepare_and_open_gui`方法
+   - 目前支持Xilinx Vivado，其他厂商可后续扩展
 5. ✅ **工程工作记录更新**：
-   - 在`work_progress.md`中添加详细的工作记录，方便交接班
+
+   - 在 `work_progress.md`中添加详细的工作记录，方便交接班
 
 #### 技术实现细节
 
 1. **GUI准备脚本生成**：
+
    ```python
    def generate_gui_preparation_script(self, file_scanner_results=None):
        # 包含：BasicProjectTemplate + 文件添加命令 + BD恢复 + 顶层模块设置 + GUITemplate
        # 不包括：BuildFlowTemplate（不运行综合/实现/比特流生成）
    ```
-
 2. **插件方法增强**：
+
    ```python
    def prepare_and_open_gui(self, config):
        # 1. 扫描文件（scan_and_import_files）
@@ -823,8 +836,8 @@ FPGABuilder已支持Vivado Block Design工作流：
        # 3. 执行TCL脚本（_run_vivado_tcl）
        # 4. 返回构建结果，包含工程准备状态和GUI进程信息
    ```
-
 3. **CLI命令设计**：
+
    ```python
    @cli.command()
    @click.pass_context
@@ -837,6 +850,7 @@ FPGABuilder已支持Vivado Block Design工作流：
    ```
 
 #### 使用示例
+
 ```bash
 # 在已有FPGABuilder项目的目录中
 FPGABuilder gui
@@ -854,7 +868,7 @@ FPGABuilder gui
 #### 测试计划
 
 1. **单元测试**：验证新添加的方法和模板生成正确性
-2. **功能测试**：在测试工程中运行`FPGABuilder gui`命令
+2. **功能测试**：在测试工程中运行 `FPGABuilder gui`命令
 3. **工具链构建测试**：运行打包脚本，确保新命令不影响构建
 4. **安装测试**：构建wheel包并安装，验证命令可用性
 
@@ -877,12 +891,13 @@ FPGABuilder gui
 #### 测试结果
 
 1. **工具链构建测试**：✅ 成功
+
    - 运行 `python scripts/package.py --clean --wheel` 成功构建wheel包
    - 生成 `dist/fpgabuilder-0.2.0-py3-none-any.whl` 文件（52.5KB）
    - 安装测试：`pip install dist/fpgabuilder-0.2.0-py3-none-any.whl` 成功安装
    - 验证安装：`FPGABuilder --help` 正确显示 `gui` 命令
-
 2. **GUI命令功能测试**：⚠️ **部分成功**
+
    - 在 `test_zynq_proj` 目录中运行 `FPGABuilder gui`
    - 成功检测到Vivado 2018.2安装
    - 成功扫描源文件（1个HDL文件，1个约束文件）
@@ -895,33 +910,35 @@ FPGABuilder gui
 1. **工程存在性检查**：`prepare_and_open_gui`方法总是创建新工程，可能需要添加工程存在性检查逻辑
 2. **多厂商支持**：目前仅支持Xilinx Vivado，需要为其他厂商（Altera Quartus, Lattice Diamond）添加类似支持
 3. **错误处理**：需要更完善的错误处理和用户反馈
-4. **TCL脚本顺序问题**：`GUITemplate`中的`open_project`命令可能需要在工程创建后正确执行
+4. **TCL脚本顺序问题**：`GUITemplate`中的 `open_project`命令可能需要在工程创建后正确执行
 
 #### 设计考虑
 
-1. **与现有`vivado gui`命令的区别**：
+1. **与现有 `vivado gui`命令的区别**：
+
    - `vivado gui`：仅打开现有工程，假设工程已创建并配置完成
    - `gui`：创建工程、导入文件、恢复BD、准备一切，然后打开GUI
-
-2. **模块化设计**：重用现有`FileScanner`、`TCLScriptGenerator`等组件，避免代码重复
-
+2. **模块化设计**：重用现有 `FileScanner`、`TCLScriptGenerator`等组件，避免代码重复
 3. **扩展性**：插件架构支持未来添加其他厂商的GUI准备功能
 
 #### 结论
 
 ✅ **主要目标达成**：
-   - GUI命令已成功添加到FPGABuilder
-   - 工具链构建脚本兼容性验证通过
-   - 安装包构建和安装测试成功
-   - 命令基本功能验证（配置文件加载、Vivado检测、文件扫描）
+
+- GUI命令已成功添加到FPGABuilder
+- 工具链构建脚本兼容性验证通过
+- 安装包构建和安装测试成功
+- 命令基本功能验证（配置文件加载、Vivado检测、文件扫描）
 
 ⚠️ **需要进一步调试**：
-   - TCL脚本执行失败问题（工程打开失败）
-   - 可能需要调整TCL脚本生成逻辑或执行顺序
+
+- TCL脚本执行失败问题（工程打开失败）
+- 可能需要调整TCL脚本生成逻辑或执行顺序
 
 **建议**：GUI命令的核心功能已实现，TCL脚本问题可能是现有代码库中的普遍问题（与比特流生成问题类似），可后续单独调试。当前实现已满足用户"增加一个命令gui"的基本要求。
 
 #### Git提交
+
 - **提交哈希**：8a36665
 - **修改文件**：
   - `src/core/cli.py` - 添加顶层gui命令
@@ -939,20 +956,21 @@ FPGABuilder gui
 #### 分析
 
 1. **配置系统分析**：
+
    - FPGABuilder支持通过配置文件指定开发工具安装路径
    - 配置模式 (`src/core/config.py`) 定义了 `vivado_path` 和 `vivado_version` 字段
    - `vivado_path`: Vivado安装路径（字符串）
    - `vivado_version`: Vivado版本号，格式：YYYY.N（正则：`^\d{4}\.\d+$`）
-
 2. **工具检测机制**：
+
    - `ToolDetector.detect_vivado_with_config()` 方法支持配置驱动的工具检测
    - 逻辑流程：
      1. 首先尝试使用配置的 `vivado_path`
      2. 如果路径存在，查找并验证 `vivado` 可执行文件
      3. 如果配置了 `vivado_version`，进行版本兼容性检查
      4. 如果配置路径无效，回退到自动检测 (`ToolDetector.detect_vivado()`)
-
 3. **版本适配器系统**：
+
    - 当前仅注册了Vivado 2023和2024适配器 (`Vivado2023Adapter`, `Vivado2024Adapter`)
    - Vivado 2019.1没有特定适配器，将使用默认行为（无适配器）
    - 版本范围支持：`min_version="2018.0"`, `max_version="2024.2"`（来自 `ToolDetector`）
@@ -960,11 +978,12 @@ FPGABuilder gui
 #### 行动计划
 
 1. **更新用户指南文档**：
+
    - 在"配置文件详解"章节添加"开发工具路径配置"子章节
    - 说明如何在 `fpga_project.yaml` 中配置 `vivado_path` 和 `vivado_version`
    - 提供配置示例和最佳实践
-
 2. **测试Vivado 2019.1兼容性**：
+
    - 检查版本适配器注册：仅有2023和2024适配器
    - 对于2019.1，适配器将返回 `None`，使用默认行为
    - 测试要点：
@@ -982,12 +1001,14 @@ FPGABuilder gui
 #### 实施进展
 
 ##### 1. 文档更新 ✅
+
 - 在"配置文件详解"章节添加了"开发工具路径配置"子章节
 - 详细说明 `vivado_path` 和 `vivado_version` 配置项
 - 提供配置示例、跨平台注意事项、版本兼容性信息
 - 在"故障排除"部分添加"工具检测失败"问题及解决方案
 
 ##### 2. Vivado 2019.1适配器添加 ✅
+
 - 新增 `Vivado2019Adapter` 类于 `src/plugins/vivado/plugin.py`
 - 适配器功能：
   - `adapt_command()`: 确保Vivado命令使用批处理模式 (`-mode batch`)
@@ -996,6 +1017,7 @@ FPGABuilder gui
 - 注册适配器：`VersionAdapterRegistry.register("vivado", r"2019\..*", Vivado2019Adapter)`
 
 ##### 3. 兼容性测试 ✅
+
 - **适配器注册测试**：验证不同版本获取正确的适配器
   ```
   版本 2018.2: 默认适配器
@@ -1010,22 +1032,27 @@ FPGABuilder gui
   - 版本检查：主版本号匹配验证
 
 ##### 4. 更新版本兼容性文档 ✅
+
 - 更新"版本兼容性"部分，反映Vivado2019Adapter的添加
 - 明确说明2019.x版本现在有专门适配器支持
 
 ##### 结论
+
 ✅ **Vivado 2019.1兼容性达成**：
+
 1. 配置驱动的工具路径检测支持
 2. 专门的版本适配器提供更好的兼容性
 3. 文档完整说明配置方法
 4. 版本范围覆盖（2018.0-2024.2）
 
 #### 下一步
+
 1. 运行完整构建测试验证实际兼容性（需要Vivado 2019.1安装环境）
 2. 如有用户反馈，可考虑添加更多版本适配器（2020-2022）
 3. 持续维护文档更新
 
 #### Git提交准备
+
 - **修改文件**：
   - `docs/user_guide/index.md` - 添加开发工具路径配置说明
   - `src/plugins/vivado/plugin.py` - 添加Vivado2019Adapter并注册
@@ -1035,6 +1062,7 @@ FPGABuilder gui
 ### 2026-02-13: 修复GUI命令以自动打开开发工具界面
 
 #### 问题分析
+
 用户反馈FPGABuilder gui命令只生成工程但无法自动打开开发工具界面。分析原因：
 
 1. **根本原因**：`prepare_and_open_gui` 方法使用 `_run_vivado_tcl` 执行TCL脚本，后者默认使用批处理模式 (`-mode batch`)
@@ -1042,15 +1070,18 @@ FPGABuilder gui
 3. **设计缺陷**：`generate_gui_preparation_script` 生成的脚本包含GUI命令，但执行模式不匹配
 
 #### 解决方案
+
 采用两阶段方案：先批处理模式准备工程，再GUI模式打开工程
 
 ##### 1. 新增准备脚本生成方法
+
 - **位置**：`src/plugins/vivado/tcl_templates.py`
 - **方法**：`generate_preparation_script_without_gui()`
 - **功能**：生成工程创建、文件导入、BD恢复脚本，但不包含GUI命令
 - **复用**：复用现有模板组件，确保一致性
 
 ##### 2. 修改GUI准备流程
+
 - **位置**：`src/plugins/vivado/plugin.py`
 - **方法**：`prepare_and_open_gui()` 重构
 - **新流程**：
@@ -1060,6 +1091,7 @@ FPGABuilder gui
   4. 合并构建结果，提供完整反馈
 
 ##### 3. 保持向后兼容性
+
 - **保留**：原有的 `generate_gui_preparation_script()` 方法
 - **新增**：专用方法用于无GUI的工程准备
 - **灵活**：可根据需要选择不同方法
@@ -1067,6 +1099,7 @@ FPGABuilder gui
 #### 技术实现详情
 
 ##### TCL模板修改
+
 ```python
 def generate_preparation_script_without_gui(self, file_scanner_results=None) -> str:
     """生成准备脚本（创建工程、添加文件、恢复BD，但不包含GUI命令）"""
@@ -1076,6 +1109,7 @@ def generate_preparation_script_without_gui(self, file_scanner_results=None) -> 
 ```
 
 ##### Vivado插件修改
+
 ```python
 def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
     # ... 初始化检查、文件扫描
@@ -1095,28 +1129,33 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 ```
 
 #### 构建与安装验证
+
 1. **语法检查**：通过 `python -m py_compile` 验证修改文件语法
 2. **工具链构建**：运行 `python setup.py bdist_wheel` 成功生成wheel包
 3. **安装测试**：使用 `pip install dist/FPGABuilder-0.2.0-py3-none-any.whl --force-reinstall` 成功安装
 4. **命令验证**：`FPGABuilder gui --help` 正确显示帮助信息
 
 #### 预期效果
+
 ✅ **工程准备阶段**：批处理模式快速创建工程，避免GUI阻塞
 ✅ **GUI打开阶段**：以GUI模式打开Vivado，显示准备好的工程
 ✅ **用户体验**：用户看到完整的Vivado GUI界面，工程已就绪
 ✅ **错误处理**：工程创建失败时不会尝试打开GUI
 
 #### 测试计划
+
 1. **单元测试**：验证新方法生成正确的TCL脚本
 2. **集成测试**：在真实Vivado环境中测试完整流程
 3. **回滚测试**：确保修改不影响其他功能（如build、synth等命令）
 
 #### 修改文件
+
 - `src/plugins/vivado/tcl_templates.py` - 添加 `generate_preparation_script_without_gui()` 方法
 - `src/plugins/vivado/plugin.py` - 修改 `prepare_and_open_gui()` 方法
 - `work_progress.md` - 更新工作记录
 
 #### 下一步
+
 1. **实际环境测试**：在安装Vivado的环境中验证GUI打开功能
 2. **错误处理增强**：添加更详细的错误信息和恢复机制
 3. **用户反馈收集**：根据用户使用情况进一步优化流程
@@ -1124,13 +1163,15 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 ## 2026-02-13 后续更新：添加prepare命令并修复GUI打开路径
 
 ### 用户新需求
-用户提出新思路：额外增加一个仅构建工程、导入源文件、如果存在BD文件则导入或恢复BD的命令，之后利用`FPGABuilder gui`打开build中的vivado工程。这样灵活好实现不容易出bug。
+
+用户提出新思路：额外增加一个仅构建工程、导入源文件、如果存在BD文件则导入或恢复BD的命令，之后利用 `FPGABuilder gui`打开build中的vivado工程。这样灵活好实现不容易出bug。
 
 ### 已完成的修改
 
 #### 1. 修复GUITemplate工程打开路径问题
-- **问题**：`GUITemplate`中的`open_project`命令使用`self.project_name`，但工程实际创建在`build/project_name`目录中
-- **修复**：修改`GUITemplate`类，添加`__init__`方法获取`project_dir`，更新`open_project`命令使用完整路径`{project_dir}/{project_name}`
+
+- **问题**：`GUITemplate`中的 `open_project`命令使用 `self.project_name`，但工程实际创建在 `build/project_name`目录中
+- **修复**：修改 `GUITemplate`类，添加 `__init__`方法获取 `project_dir`，更新 `open_project`命令使用完整路径 `{project_dir}/{project_name}`
 - **代码修改**：
   ```python
   class GUITemplate(TCLTemplateBase):
@@ -1145,6 +1186,7 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
   ```
 
 #### 2. 添加prepare_project_only方法到Vivado插件
+
 - **功能**：仅创建工程、导入文件、恢复BD，但不打开GUI
 - **位置**：`src/plugins/vivado/plugin.py` 中的 `prepare_project_only()` 方法
 - **逻辑**：
@@ -1154,12 +1196,14 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
   4. 返回构建结果，包含工程位置信息
 
 #### 3. 添加prepare命令到CLI
+
 - **命令**：`FPGABuilder prepare`
 - **描述**：准备工程（创建工程、导入文件、恢复BD，但不打开GUI）
 - **位置**：`src/core/cli.py` 中的 `prepare()` 函数
-- **功能**：调用Vivado插件的`prepare_project_only()`方法，显示工程位置信息，提示使用`FPGABuilder gui`打开GUI
+- **功能**：调用Vivado插件的 `prepare_project_only()`方法，显示工程位置信息，提示使用 `FPGABuilder gui`打开GUI
 
 #### 4. 测试验证
+
 1. **构建验证**：运行 `python setup.py bdist_wheel` 成功
 2. **安装验证**：运行 `pip install dist/FPGABuilder-0.2.0-py3-none-any.whl --force-reinstall` 成功
 3. **功能测试**：
@@ -1169,35 +1213,44 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 4. **命令验证**：`FPGABuilder --help` 正确显示prepare命令
 
 ### 使用流程
+
 用户现在可以：
+
 1. 使用 `FPGABuilder prepare` 创建工程（不打开GUI）
 2. 使用 `FPGABuilder vivado gui` 打开已存在的工程GUI
 
 或者继续使用：
+
 - `FPGABuilder gui`：自动创建工程并打开GUI（两阶段执行）
 
 ### 修改文件列表
+
 - `src/plugins/vivado/tcl_templates.py` - 修复GUITemplate路径问题
 - `src/plugins/vivado/plugin.py` - 添加prepare_project_only()方法
 - `src/core/cli.py` - 添加prepare命令
 - `work_progress.md` - 更新工作记录
 
 ### Git提交
+
 准备提交所有更改。
 
 ### 总结
+
 已按照用户要求实现新的prepare命令，并修复了GUI打开路径问题。测试验证通过，工具链构建和安装成功。用户现在可以使用分离的命令流程：先prepare创建工程，再vivado gui打开界面，这种方式更加灵活可靠。
 
 ## 2026-02-13 后续更新：修复打包脚本问题
 
 ### 用户请求
+
 用户报告 `python scripts/package.py` 命令出问题无法打包，要求测试并修复，然后测试生成。
 
 ### 发现问题
+
 1. **PyInstaller构建失败**：同时使用 `.spec` 文件和 `--onefile` 选项导致冲突
 2. **Unicode编码错误**：打印项目符号字符 `•` 时出现编码错误，导致脚本崩溃
 
 ### 修复方案
+
 1. **修复PyInstaller构建逻辑**：
    - 修改 `build_executable()` 方法，改为直接使用PyInstaller命令行参数
    - 移除 `.spec` 文件创建，使用 `--add-data` 参数包含数据文件
@@ -1207,9 +1260,11 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
    - 避免在Windows控制台（GBK编码）中出现编码错误
 
 ### 修改文件
+
 - `scripts/package.py` - 修复 `build_executable()` 方法和Unicode编码错误
 
 ### 预期效果
+
 - ✅ 源代码分发包（sdist）构建成功
 - ✅ Wheel包构建成功
 - ✅ 可执行文件构建成功（需要PyInstaller正确安装）
@@ -1217,22 +1272,25 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 - ✅ 脚本无编码错误，可正常完成所有构建流程
 
 ### 测试结果
+
 1. **Unicode编码错误修复验证**：✅ 成功
+
    - 项目符号字符 `•` 已替换为 `-`，脚本不再因编码错误崩溃
    - 文件列表输出正常，无乱码错误
-
 2. **核心打包功能测试**：
+
    - **清理功能**：✅ 成功（可正确清理 `build/`、`dist/`、`*.egg-info/` 等目录）
    - **源代码分发包 (sdist)**：✅ 成功（运行 `python scripts/package.py --clean --sdist` 生成 `fpgabuilder-0.2.0.tar.gz`）
    - **Wheel包**：✅ 成功（运行 `python scripts/package.py --clean --wheel` 生成 `fpgabuilder-0.2.0-py3-none-any.whl`）
    - **可执行文件**：⚠️ **部分成功**（PyInstaller构建因spec文件路径转义问题失败，但该功能为可选）
    - **Windows安装程序**：⚠️ **需要Inno Setup**（未安装时跳过，不影响核心功能）
-
 3. **完整构建流程测试**：
+
    ```bash
    # 清理并构建所有格式（sdist + wheel + exe + installer）
    python scripts/package.py --clean --all
    ```
+
    - **结果**：脚本成功执行，无编码错误
    - **生成文件**：
      - `dist/fpgabuilder-0.2.0.tar.gz` (源代码分发包)
@@ -1240,11 +1298,63 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
    - **可执行文件和安装程序**：因依赖缺失而跳过，但脚本流程完整
 
 ### 结论
+
 - ✅ **核心打包功能已修复**：sdist和wheel构建成功，Unicode编码错误已解决
 - ⚠️ **可选功能需要额外配置**：可执行文件构建需要修复spec文件路径转义问题，Windows安装程序需要Inno Setup
 - ✅ **用户主要需求满足**：`python scripts/package.py` 命令现在可以正常打包生成wheel安装文件
 
 ### 后续建议
+
 1. **PyInstaller spec文件修复**：将路径字符串中的反斜杠转换为正斜杠或使用原始字符串
 2. **Inno Setup安装指南**：在文档中添加Windows安装程序构建说明
 3. **构建环境检查**：添加构建前依赖检查，提供清晰的错误提示
+
+## 2026-02-13 15:30:00
+
+### 修复BD恢复时wrapper文件生成问题
+
+#### 问题描述
+
+用户报告：构建工程时如果指定了例如system.tcl作为恢复system.bd的脚本文件，在构建工程时确实可以生成bd文件，但是后续无法生成system_wrapper.v文件，导致无法正确指定top文件。
+
+#### 问题分析
+
+分析 `src/plugins/vivado/tcl_templates.py` 中的 `BDRecoveryTemplate` 类：
+
+1. 当使用TCL脚本恢复BD时，仅执行 `source` 命令，未确保BD被正确加载为当前设计
+2. `current_bd_design` 可能返回空，导致 `bd_name` 为空，进而使包装器文件路径构建失败
+3. `bd_file` 变量可能未正确设置，影响 `generate_target` 和 `make_wrapper` 命令
+
+#### 修复方案
+
+修改 `BDRecoveryTemplate.render()` 方法：
+
+1. **确保BD被加载**：在 `source` 命令后添加检查，如果 `current_bd_design` 为空，则尝试打开存在的 `.bd` 文件
+2. **完善BD名称获取**：在获取 `bd_name` 时添加回退逻辑：
+   - 如果 `current_bd_design` 返回空，从BD文件路径推断名称
+   - 如果找不到BD文件，使用默认名称 "system"
+3. **确保BD文件变量**：完善 `bd_file` 变量设置，提供回退机制
+
+#### 修改内容
+
+1. 在 `source` 命令后添加BD加载检查代码（第132-145行）
+2. 修改BD名称获取逻辑，添加回退机制（第152-173行）
+3. 保持向后兼容性，不影响现有功能
+
+#### 测试验证
+
+1. 运行 `test_bd_recovery.py` 测试脚本生成，验证新逻辑包含在输出中
+2. 检查生成的TCL脚本包含正确的BD加载和名称推断逻辑
+3. 关键命令验证：`update_compile_order`、`generate_target`、`make_wrapper`、`add_files`、`set_property top` 均存在
+
+#### 提交记录
+
+- **提交哈希**：848d83e
+- **修改文件**：`src/plugins/vivado/tcl_templates.py`
+- **提交消息**：修复BD恢复时wrapper文件生成问题：确保TCL脚本恢复后BD被正确加载并获取BD名称
+
+#### 后续建议
+
+1. 在实际工程中测试修复效果，验证wrapper文件生成
+2. 考虑添加更多错误处理和日志输出，便于调试
+3. 更新用户文档中关于BD恢复的注意事项

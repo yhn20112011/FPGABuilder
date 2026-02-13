@@ -135,7 +135,7 @@ class VivadoPlugin(FPGAVendorPlugin):
         # 获取版本适配器
         self._adapter = VersionAdapterRegistry.get_adapter(self._tool_info)
         if self._adapter:
-            print(f"✅ 使用版本适配器: {self._adapter.__class__.__name__}")
+            print(f"[OK] 使用版本适配器: {self._adapter.__class__.__name__}")
 
         self._initialized = True
         return True
