@@ -920,3 +920,12 @@ FPGABuilder gui
    - 可能需要调整TCL脚本生成逻辑或执行顺序
 
 **建议**：GUI命令的核心功能已实现，TCL脚本问题可能是现有代码库中的普遍问题（与比特流生成问题类似），可后续单独调试。当前实现已满足用户"增加一个命令gui"的基本要求。
+
+#### Git提交
+- **提交哈希**：8a36665
+- **修改文件**：
+  - `src/core/cli.py` - 添加顶层gui命令
+  - `src/plugins/vivado/plugin.py` - 添加prepare_and_open_gui方法
+  - `src/plugins/vivado/tcl_templates.py` - 添加generate_gui_preparation_script方法
+  - `work_progress.md` - 更新工作记录
+- **提交消息**：添加GUI命令功能
