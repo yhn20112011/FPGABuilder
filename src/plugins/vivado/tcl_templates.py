@@ -503,6 +503,32 @@ class TCLScriptGenerator:
 
         return '\n'.join(script_parts)
 
+    def generate_gui_preparation_script(self, file_scanner_results: Optional[Dict[str, Any]] = None) -> str:
+        """生成GUI准备脚本（创建工程、添加文件、恢复BD，但不运行构建流程）"""
+        script_parts = []
+
+        # 基本工程创建
+        basic_template = BasicProjectTemplate(self.config, file_scanner_results)
+        script_parts.append(basic_template.render())
+
+        # 文件添加命令
+        if file_scanner_results:
+            script_parts.append(self._generate_file_add_commands(file_scanner_results))
+
+        # Block Design恢复
+        bd_config = self.config.get('source', {}).get('block_design')
+        if bd_config:
+            bd_template = BDRecoveryTemplate(self.config, bd_config)
+            script_parts.append(bd_template.render())
+
+        # 设置顶层模块
+        script_parts.append(self._generate_top_module_setup())
+
+        # GUI打开命令
+        script_parts.append(self.generate_gui_script())
+
+        return '\n'.join(script_parts)
+
     def _generate_file_add_commands(self, file_scanner_results: Dict[str, Any]) -> str:
         """生成文件添加命令"""
         lines = ['# 添加源文件', '']

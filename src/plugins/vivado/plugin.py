@@ -458,6 +458,42 @@ class VivadoPlugin(FPGAVendorPlugin):
 
         return result
 
+    def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
+        """准备工程并打开GUI（创建工程、导入文件、恢复BD，但不运行综合）"""
+        print("准备Vivado工程并打开GUI...")
+
+        if not self.initialize(config):
+            return BuildResult(
+                success=False,
+                artifacts={},
+                logs={},
+                metrics={},
+                errors=["Vivado未检测到，无法准备工程"]
+            )
+
+        # 扫描文件
+        scan_result = self.scan_and_import_files(config)
+
+        # 生成GUI准备脚本
+        from .tcl_templates import TCLScriptGenerator
+        generator = TCLScriptGenerator(config)
+        tcl_script = generator.generate_gui_preparation_script(scan_result['scanned_files'])
+
+        # 执行TCL脚本
+        result = self._run_vivado_tcl(tcl_script, "prepare_gui.tcl")
+
+        if result.success:
+            result.artifacts.update({
+                'project_prepared': '工程准备完成',
+                'scanned_files_count': f"{len(scan_result.get('sorted_hdl_files', []))} HDL文件",
+                'gui_opened': 'GUI已启动'
+            })
+            print("Vivado工程准备完成，GUI已打开")
+        else:
+            print("Vivado工程准备失败")
+
+        return result
+
     def open_gui(self, config: Dict[str, Any]) -> BuildResult:
         """打开Vivado GUI界面"""
         print("打开Vivado GUI...")
