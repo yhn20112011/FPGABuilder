@@ -173,8 +173,8 @@ exe = EXE(
         # 运行PyInstaller
         cmd = [sys.executable, "-m", "PyInstaller", "--clean", str(spec_file)]
 
-        if onefile:
-            cmd.append("--onefile")
+        # 单文件模式已通过spec文件配置
+        # 不再添加--onefile选项以避免冲突
 
         print(f"执行命令: {' '.join(cmd)}")
         result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
@@ -350,7 +350,7 @@ end;
             for file in sorted(self.output_dir.glob("*")):
                 size = file.stat().st_size if file.is_file() else 0
                 size_str = f"{size / 1024 / 1024:.2f} MB" if size > 0 else ""
-                print(f"  • {file.name} {size_str}")
+                print(f"  - {file.name} {size_str}")
 
         if success:
             print(f"\n✅ 打包完成！文件保存在: {self.output_dir}")
