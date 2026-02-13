@@ -287,7 +287,7 @@ class BuildFlowTemplate(TCLTemplateBase):
         # 复制比特流文件到输出目录
         lines.append('# 复制比特流文件到输出目录')
         lines.append('set run_dir [get_property DIRECTORY [get_runs impl_1]]')
-        lines.append('set bit_files [glob -nocomplain "$run_dir/*.bit $run_dir/*.bin"]')
+        lines.append('set bit_files [glob -nocomplain "$run_dir/*.bit $run_dir/*.bin $run_dir/*.ltx"]')
         lines.append('if {[llength $bit_files] > 0} {')
         lines.append('    foreach bit_file $bit_files {')
         lines.append('        set filename [file tail $bit_file]')

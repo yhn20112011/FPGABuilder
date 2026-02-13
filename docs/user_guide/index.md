@@ -343,6 +343,120 @@ build:
     options:
       bin_file: true
       mask_file: true
+  # 钩子脚本配置（可选）
+  hooks:
+    # 构建前钩子：整个构建流程开始前执行
+    pre_build: |
+      echo "构建开始前检查环境"
+      python scripts/check_dependencies.py
+      echo "当前目录: $(pwd)"
+
+    # 综合前钩子：综合步骤开始前执行
+    pre_synth: "scripts/pre_synth.tcl"
+
+    # 综合后钩子：综合完成后执行
+    post_synth: "echo '综合完成'"
+
+    # 实现前钩子：实现步骤开始前执行
+    pre_impl: |
+      echo "实现前命令1"
+      echo "实现前命令2"
+
+    # 实现后钩子：实现完成后执行
+    post_impl: "scripts/post_impl.py"
+
+    # 比特流后钩子：比特流生成后执行
+    post_bitstream:
+      - echo "比特流生成完成"
+      - cp build/bitstreams/*.bit releases/
+      - python scripts/notify.py --message "构建完成"
+
+    # 二进制合并脚本（Zynq等SoC使用）
+    bin_merge_script: "scripts/merge_bin.py"
+
+    # 自定义脚本映射
+    custom_scripts:
+      custom1: "scripts/custom1.tcl"
+      custom2: "scripts/custom2.py"
+```
+
+### 钩子脚本配置
+
+钩子脚本允许在构建流程的不同阶段执行自定义命令，非常适合自动化任务如环境检查、文件复制、通知发送等。
+
+#### 支持的钩子类型
+
+| 钩子名称 | 执行时机 | 示例用途 |
+|---------|---------|---------|
+| `pre_build` | 整个构建流程开始前 | 环境检查、依赖下载、目录清理 |
+| `pre_synth` | 综合步骤开始前 | 设置综合参数、运行预处理脚本 |
+| `post_synth` | 综合完成后 | 生成综合报告、分析时序结果 |
+| `pre_impl` | 实现步骤开始前 | 设置实现策略、加载额外约束 |
+| `post_impl` | 实现完成后 | 生成实现报告、分析布局布线结果 |
+| `post_bitstream` | 比特流生成后 | 复制比特流文件、发送构建通知 |
+| `bin_merge_script` | 二进制文件合并 | 为Zynq等SoC生成boot.bin文件 |
+
+#### 钩子格式
+
+钩子支持三种配置格式：
+
+1. **单行字符串**：
+   ```yaml
+   hooks:
+     pre_synth: "scripts/pre_synth.tcl"
+   ```
+
+2. **多行字符串**：
+   ```yaml
+   hooks:
+     pre_build: |
+       echo "开始构建"
+       python scripts/check_env.py
+       echo "环境检查完成"
+   ```
+
+3. **命令数组**：
+   ```yaml
+   hooks:
+     post_bitstream:
+       - echo "比特流生成完成"
+       - cp build/bitstreams/*.bit releases/
+       - python scripts/notify.py
+   ```
+
+#### 执行规则
+
+- **脚本文件检测**：如果钩子值是存在的文件路径，将作为脚本文件执行
+  - `.py`文件使用Python执行
+  - `.tcl`文件在Vivado环境中执行
+  - `.sh`文件使用bash执行
+- **直接命令**：如果钩子值不是文件路径，将作为shell命令直接执行
+- **错误处理**：钩子执行失败时，会询问用户是否继续构建
+- **平台兼容**：Windows/Linux/macOS均可使用
+
+#### 实用示例
+
+```yaml
+build:
+  hooks:
+    # 构建前检查环境
+    pre_build: |
+      echo "=== 构建环境检查 ==="
+      echo "Python版本: $(python --version)"
+      echo "当前目录: $(pwd)"
+      echo "时间: $(date)"
+
+    # 比特流生成后复制文件
+    post_bitstream:
+      - echo "=== 复制比特流文件 ==="
+      - mkdir -p releases
+      - cp build/bitstreams/*.bit releases/
+      - "if [ -f build/bitstreams/*.ltx ]; then cp build/bitstreams/*.ltx releases/; fi"
+      - echo "文件已复制到 releases/ 目录"
+
+    # 使用脚本文件
+    pre_synth: "scripts/generate_constraints.py"
+    post_impl: "scripts/analyze_timing.tcl"
 ```
 
 ### 文档配置

@@ -256,28 +256,34 @@ endmodule
         with open(example_constraint_file, 'w', encoding='utf-8') as f:
             f.write(f'''# {project_name} 时钟和引脚约束
 # 由FPGABuilder自动生成
-# 请根据实际硬件修改引脚分配
+# 基于ZC706开发板（xc7z045ffg676-2）的示例引脚分配
+# 实际使用请根据硬件修改引脚分配
 
-# 时钟约束
-create_clock -name clk -period 10.000 [get_ports clk]
+# 时钟约束（板上125MHz时钟）
+create_clock -name clk -period 8.000 [get_ports clk]
 
-# 复位约束
+# 电气标准约束
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
 set_property IOSTANDARD LVCMOS33 [get_ports data_in[*]]
 set_property IOSTANDARD LVCMOS33 [get_ports data_out[*]]
 set_property IOSTANDARD LVCMOS33 [get_ports valid_out]
 
-# 引脚分配示例（ZC706开发板）
-# set_property PACKAGE_PIN Y9 [get_ports clk]
-# set_property PACKAGE_PIN AB10 [get_ports rst_n]
-# set_property PACKAGE_PIN AA10 [get_ports data_in[0]]
-# set_property PACKAGE_PIN AB11 [get_ports data_out[0]]
-# set_property PACKAGE_PIN AC11 [get_ports valid_out]
+# 引脚分配（ZC706开发板示例引脚 - 简化版本，实际使用请修改）
+# 时钟引脚
+set_property PACKAGE_PIN AC21 [get_ports clk]
+# 复位引脚
+set_property PACKAGE_PIN AB10 [get_ports rst_n]
+# 数据输入引脚（示例：所有data_in位连接到同一引脚，实际应分别分配）
+set_property PACKAGE_PIN AA10 [get_ports data_in[*]]
+# 数据输出引脚（示例：所有data_out位连接到同一引脚，实际应分别分配）
+set_property PACKAGE_PIN AB11 [get_ports data_out[*]]
+# 有效输出引脚
+set_property PACKAGE_PIN AC11 [get_ports valid_out]
 
-# 重要：为所有端口添加正确的引脚约束，否则生成比特流时会遇到DRC错误
-# 对于测试目的，可以暂时降低DRC严重性：
-# set_property SEVERITY {{Warning}} [get_drc_checks UCIO-1]
+# 降低DRC检查严重性，避免未约束端口错误
+# 在实际设计中，应为所有端口添加正确的引脚约束
+set_property SEVERITY {{Warning}} [get_drc_checks UCIO-1]
 ''')
         click.echo(f"创建示例约束文件: {example_constraint_file}")
 
@@ -1245,14 +1251,74 @@ def generate_documentation(format, output):
 
 def clean_all():
     """清理所有生成文件"""
-    # 实现清理逻辑
-    pass
+    import os
+    import shutil
+    import glob
+    from pathlib import Path
+
+    cwd = Path.cwd()
+    print(f"清理所有生成文件: {cwd}")
+
+    # 删除build文件夹
+    build_dir = cwd / "build"
+    if build_dir.exists():
+        try:
+            shutil.rmtree(build_dir)
+            print(f"已删除构建目录: {build_dir}")
+        except Exception as e:
+            print(f"删除构建目录失败: {e}")
+
+    # 删除所有.log和.jou文件
+    log_files = list(cwd.glob("*.log")) + list(cwd.glob("*.jou"))
+    for file in log_files:
+        try:
+            os.remove(file)
+            print(f"已删除日志文件: {file}")
+        except Exception as e:
+            print(f"删除日志文件失败 {file}: {e}")
+
+    # 递归查找并删除子目录中的.log和.jou文件
+    for root, dirs, files in os.walk(cwd):
+        for file in files:
+            if file.endswith('.log') or file.endswith('.jou'):
+                file_path = Path(root) / file
+                try:
+                    os.remove(file_path)
+                    print(f"已删除日志文件: {file_path}")
+                except Exception as e:
+                    print(f"删除日志文件失败 {file_path}: {e}")
+
+    print("所有生成文件清理完成")
 
 
 def clean_build():
     """清理构建文件"""
-    # 实现清理逻辑
-    pass
+    import os
+    import shutil
+    from pathlib import Path
+
+    cwd = Path.cwd()
+    print(f"清理构建文件: {cwd}")
+
+    # 删除build文件夹
+    build_dir = cwd / "build"
+    if build_dir.exists():
+        try:
+            shutil.rmtree(build_dir)
+            print(f"已删除构建目录: {build_dir}")
+        except Exception as e:
+            print(f"删除构建目录失败: {e}")
+
+    # 删除当前目录的.log和.jou文件
+    log_files = list(cwd.glob("*.log")) + list(cwd.glob("*.jou"))
+    for file in log_files:
+        try:
+            os.remove(file)
+            print(f"已删除日志文件: {file}")
+        except Exception as e:
+            print(f"删除日志文件失败 {file}: {e}")
+
+    print("构建文件清理完成")
 
 
 def package_project(format, output):
