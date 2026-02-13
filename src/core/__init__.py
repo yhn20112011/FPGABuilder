@@ -2,8 +2,8 @@
 FPGABuilder核心模块
 """
 
-__version__ = "0.1.0"
-__author__ = "FPGABuilder Team"
+__version__ = "0.2.0"
+__author__ = "FPGABuilder Team:Yihok"
 __license__ = "MIT"
 
 from .config import ConfigManager
