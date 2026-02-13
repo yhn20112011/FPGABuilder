@@ -120,7 +120,7 @@ class CLI:
 
 # Click命令组
 @click.group()
-@click.version_option(version="0.1.0", prog_name="FPGABuilder")
+@click.version_option(version="0.2.0", prog_name="FPGABuilder")
 @click.option('-c', '--config', type=click.Path(exists=True),
               help='指定配置文件')
 @click.option('-v', '--verbose', is_flag=True, help='详细输出')
