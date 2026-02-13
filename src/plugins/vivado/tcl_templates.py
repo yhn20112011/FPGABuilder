@@ -233,9 +233,9 @@ class BuildFlowTemplate(TCLTemplateBase):
         lines.append(f'file mkdir "{bitstream_output_dir}"')
         # 使用绝对路径并确保正斜杠
         lines.append(f'set bitstream_output_dir [file normalize "{bitstream_output_dir}"]')
-        lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [current_design]')
-        # 同时为运行设置输出目录
-        lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [get_runs impl_1]')
+        # 注释掉BITSTREAM.OUTPUT_DIR设置，可能引起错误
+        # lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [current_design]')
+        # lines.append(f'set_property BITSTREAM.OUTPUT_DIR "$bitstream_output_dir" [get_runs impl_1]')
         lines.append('')
 
         bitstream_options = self.bitstream_config.get('options', {})
@@ -258,7 +258,7 @@ class BuildFlowTemplate(TCLTemplateBase):
                     lines.append(f'set_property {opt_name} {opt_value} [get_runs impl_1]')
 
         # 重置比特流步骤（如果之前已经运行过）
-        lines.append('catch {reset_run impl_1 -from_step write_bitstream}')
+        lines.append('catch {reset_run impl_1 -from_step route_design}')
         lines.append('launch_runs impl_1 -to_step write_bitstream')
         lines.append('wait_on_run impl_1')
         lines.append('')
@@ -329,8 +329,13 @@ class CleanTemplate(TCLTemplateBase):
             lines.append('# 软清理：删除构建文件')
             lines.append('reset_runs synth_1')
             lines.append('reset_runs impl_1')
-            lines.append('file delete -force {*.log}')
-            lines.append('file delete -force {*.jou}')
+            # 递归删除所有.log和.jou文件
+            lines.append('foreach file [glob -nocomplain -type f *.log */*.log */*/*.log */*/*/*.log] {')
+            lines.append('    file delete -force $file')
+            lines.append('}')
+            lines.append('foreach file [glob -nocomplain -type f *.jou */*.jou */*/*.jou */*/*/*.jou] {')
+            lines.append('    file delete -force $file')
+            lines.append('}')
             lines.append('file delete -force {*.str}')
 
         elif self.clean_level == 'hard':

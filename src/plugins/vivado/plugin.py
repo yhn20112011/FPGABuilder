@@ -648,9 +648,9 @@ class VivadoPlugin(FPGAVendorPlugin):
         # 添加打开工程命令
         project_name = config.get('project', {}).get('name', 'fpga_project')
         project_dir = config.get('project_dir', './build')
-        # 使用正斜杠构建路径，避免转义问题
-        project_path = f'{project_dir}/{project_name}'.replace('\\', '/')
-        open_cmd = f'open_project {project_path}'
+        # 使用正斜杠构建路径，避免转义问题，添加.xpr扩展名
+        project_path = f'{project_dir}/{project_name}.xpr'.replace('\\', '/')
+        open_cmd = f'open_project "{project_path}"'
         impl_tcl = f'{open_cmd}\n{impl_tcl}'
 
         # 执行TCL脚本
@@ -701,9 +701,9 @@ class VivadoPlugin(FPGAVendorPlugin):
         # 添加打开工程命令
         project_name = config.get('project', {}).get('name', 'fpga_project')
         project_dir = config.get('project_dir', './build')
-        # 使用正斜杠构建路径，避免转义问题
-        project_path = f'{project_dir}/{project_name}'.replace('\\', '/')
-        open_cmd = f'open_project {project_path}'
+        # 使用正斜杠构建路径，避免转义问题，添加.xpr扩展名
+        project_path = f'{project_dir}/{project_name}.xpr'.replace('\\', '/')
+        open_cmd = f'open_project "{project_path}"'
         bitstream_tcl = f'{open_cmd}\n{bitstream_tcl}'
 
         # 执行TCL脚本

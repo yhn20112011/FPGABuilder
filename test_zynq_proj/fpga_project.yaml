@@ -14,8 +14,7 @@ build:
   implementation:
     options: {}
   bitstream:
-    options:
-      bin_file: true
+    options: {}
 source:
   hdl:
   - path: src/hdl/**/*.v

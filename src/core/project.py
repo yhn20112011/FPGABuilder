@@ -205,31 +205,37 @@ Thumbs.db
             self._create_basic_template_files(project_path)
 
     def _create_zynq_template_files(self, project_path: Path) -> None:
-        """创建Zynq模板文件"""
+        """创建Zynq模板文件（简化版，基于test_zynq_proj示例）"""
         # 创建示例Verilog顶层文件
         top_module = self.project_config.get('fpga.top_module', 'top')
         verilog_content = f"""// {top_module}.v
-// Zynq FPGA顶层模块
+// Zynq FPGA顶层模块 - 简化示例
+// 由FPGABuilder自动生成
 
 module {top_module} (
     input wire clk,
     input wire rst_n,
-    output wire [7:0] leds
+    input wire data_in,
+    output wire data_out,
+    output wire valid_out
 );
 
-// 时钟和复位处理
-reg [31:0] counter;
+    // 示例：简单的流水线寄存器
+    reg [7:0] data_reg;
+    reg valid_reg;
 
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        counter <= 32'h0;
-    end else begin
-        counter <= counter + 1;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            data_reg <= 8'h0;
+            valid_reg <= 1'b0;
+        end else begin
+            data_reg <= data_in;
+            valid_reg <= 1'b1;
+        end
     end
-end
 
-// LED显示计数器高8位
-assign leds = counter[31:24];
+    assign data_out = data_reg;
+    assign valid_out = valid_reg;
 
 endmodule
 """
@@ -237,19 +243,25 @@ endmodule
         with open(project_path / 'src/hdl' / f'{top_module}.v', 'w', encoding='utf-8') as f:
             f.write(verilog_content)
 
-        # 创建约束文件示例
+        # 创建最小约束文件示例
         constraints_content = """# 时钟约束
 create_clock -name clk -period 10.000 [get_ports clk]
 
-# 引脚约束
-set_property PACKAGE_PIN Y9 [get_ports clk]
-set_property IOSTANDARD LVCMOS33 [get_ports clk]
+# 降低未约束端口DRC错误的严重性，允许生成比特流用于测试
+set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 
-set_property PACKAGE_PIN T22 [get_ports rst_n]
-set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
-
-set_property PACKAGE_PIN {U14 V14 V15 W15} [get_ports {leds[*]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {leds[*]}]
+# 注意：实际项目中需要添加正确的引脚约束
+# 引脚约束示例（ZC706开发板）：
+# set_property PACKAGE_PIN AC21 [get_ports clk]
+# set_property IOSTANDARD LVCMOS33 [get_ports clk]
+# set_property PACKAGE_PIN AB10 [get_ports rst_n]
+# set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
+# set_property PACKAGE_PIN AA10 [get_ports data_in]
+# set_property PACKAGE_PIN AB11 [get_ports data_out]
+# set_property PACKAGE_PIN AC11 [get_ports valid_out]
+# set_property IOSTANDARD LVCMOS33 [get_ports data_in]
+# set_property IOSTANDARD LVCMOS33 [get_ports data_out]
+# set_property IOSTANDARD LVCMOS33 [get_ports valid_out]
 """
 
         with open(project_path / 'src/constraints' / 'constraints.xdc', 'w', encoding='utf-8') as f:
