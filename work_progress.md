@@ -1368,3 +1368,57 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 ### 后续建议
 
 根据我的修改进行分析测试完善，适配对于生成wrapper为hdl文件的情况。以及脚本执行后工具链返回报错但实际已经正确恢复bd文件并生成system_wrapper.v并设置了顶层文件
+
+## 2026-02-24 后续修复：完善BD恢复wrapper生成逻辑
+
+### 已完成
+
+1. ✅ **修复wrapper文件扩展名适配**：
+   - 根据`wrapper_language`配置自动选择`.v`（Verilog）或`.vhd`（VHDL）扩展名
+   - 修复路径变量引用，正确使用`${project_name}`和`${bd_name}`TCL变量
+
+2. ✅ **修复重复设置顶层模块问题**：
+   - 避免在自动包装器生成后重复设置顶层模块
+   - 当`generate_wrapper=True`且`auto_wrapper=True`时，顶层模块已在自动生成逻辑中设置
+   - 修复第319-328行代码，避免重复执行
+
+3. ✅ **修复TCL脚本路径问题**：
+   - 使用`file normalize`确保`source`命令使用的TCL脚本路径正确
+   - 避免相对路径导致的文件查找失败
+
+4. ✅ **添加调试功能**：
+   - 修改`_run_vivado_tcl`方法，在Vivado执行失败时保存TCL脚本用于调试
+   - 输出更详细的错误信息便于问题诊断
+
+5. ✅ **提交git修改**：
+   - 提交哈希：5693b90
+   - 修改文件：`src/plugins/vivado/plugin.py`、`src/plugins/vivado/tcl_templates.py`
+   - 提交消息：修复BD恢复时wrapper生成问题并完善工具链适配
+
+### 当前状态
+
+- **wrapper生成逻辑**：已完善，支持Verilog和VHDL扩展名适配
+- **顶层模块设置**：避免重复设置，逻辑更清晰
+- **路径处理**：使用`file normalize`提高健壮性
+- **调试支持**：增强错误诊断能力
+
+### 遗留问题
+
+- **prepare命令仍然报错**：Vivado返回退出码1，但实际可能已部分成功（生成wrapper并设置顶层）
+- **需要进一步调试**：查看Vivado详细错误输出，确定失败原因
+- **工具链适配**：已验证wrapper文件扩展名适配逻辑，但需要实际VHDL项目测试
+
+### 建议后续步骤
+
+1. 运行prepare命令并检查生成的调试TCL脚本`debug_prepare_project.tcl`
+2. 查看Vivado详细错误输出，确定具体失败点
+3. 如果错误是良性的（如警告被视为错误），考虑调整错误处理逻辑
+4. 在实际VHDL项目（使用VHDL wrapper）中测试扩展名适配功能
+5. 完善用户文档，说明wrapper_language配置选项
+
+### 测试验证
+
+在`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`工程中测试：
+- 配置`wrapper_language: "verilog"`（默认）→ 生成`system_wrapper.v`
+- 如配置`wrapper_language: "vhdl"` → 应生成`system_wrapper.vhd`
+- wrapper文件生成和顶层设置功能基本正常，但脚本返回错误需进一步调试
