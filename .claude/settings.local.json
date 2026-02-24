@@ -3,7 +3,12 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(cmd /c:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n更新版权协议为CC BY-NC-SA 4.0，作者署名YiHok\n\n- 将许可证从MIT更改为Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International \\(CC BY-NC-SA 4.0\\)\n- 更新作者信息：将\"FPGABuilder Team\"改为\"YiHok\"\n- 添加非商用声明：\"未经本人书面授权任何人不得商用，本人保留一切权力\"\n- 更新GitHub仓库URL：将\"yourusername\"替换为\"yhn20112011\"\n- 更新相关文件：LICENSE、README.md、setup.py、源代码文件、文档等\n\n未经本人书面授权任何人不得商用，本人保留一切权力。\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git config:*)"
     ]
   }
 }
