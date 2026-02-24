@@ -1358,3 +1358,13 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 1. 在实际工程中测试修复效果，验证wrapper文件生成
 2. 考虑添加更多错误处理和日志输出，便于调试
 3. 更新用户文档中关于BD恢复的注意事项
+
+## 2026-02-24 11:06:00
+
+### 手动修复BD恢复时wrapper文件生成问题
+
+修改文件：\src\plugins\vivado\tcl_templates.py 增加了生成system_wrapper.v文件并设置该文件为顶层的脚本
+
+### 后续建议
+
+根据我的修改进行分析测试完善，适配对于生成wrapper为hdl文件的情况。以及脚本执行后工具链返回报错但实际已经正确恢复bd文件并生成system_wrapper.v并设置了顶层文件

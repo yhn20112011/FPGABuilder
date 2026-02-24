@@ -10,6 +10,10 @@ FPGABuilder是一个跨平台的FPGA自动构建工具链，旨在简化和标�
 
 pip install dist/FPGABuilder-0.1.0-py3-none-any.whl
 
+### 卸载FPGABuilder
+
+pip uninstall FPGABuilder
+
 ### Windows安装
 
 1. 下载最新版本的FPGABuilder安装包
@@ -386,27 +390,28 @@ build:
 
 #### 支持的钩子类型
 
-| 钩子名称 | 执行时机 | 示例用途 |
-|---------|---------|---------|
-| `pre_build` | 整个构建流程开始前 | 环境检查、依赖下载、目录清理 |
-| `pre_synth` | 综合步骤开始前 | 设置综合参数、运行预处理脚本 |
-| `post_synth` | 综合完成后 | 生成综合报告、分析时序结果 |
-| `pre_impl` | 实现步骤开始前 | 设置实现策略、加载额外约束 |
-| `post_impl` | 实现完成后 | 生成实现报告、分析布局布线结果 |
-| `post_bitstream` | 比特流生成后 | 复制比特流文件、发送构建通知 |
-| `bin_merge_script` | 二进制文件合并 | 为Zynq等SoC生成boot.bin文件 |
+| 钩子名称             | 执行时机           | 示例用途                       |
+| -------------------- | ------------------ | ------------------------------ |
+| `pre_build`        | 整个构建流程开始前 | 环境检查、依赖下载、目录清理   |
+| `pre_synth`        | 综合步骤开始前     | 设置综合参数、运行预处理脚本   |
+| `post_synth`       | 综合完成后         | 生成综合报告、分析时序结果     |
+| `pre_impl`         | 实现步骤开始前     | 设置实现策略、加载额外约束     |
+| `post_impl`        | 实现完成后         | 生成实现报告、分析布局布线结果 |
+| `post_bitstream`   | 比特流生成后       | 复制比特流文件、发送构建通知   |
+| `bin_merge_script` | 二进制文件合并     | 为Zynq等SoC生成boot.bin文件    |
 
 #### 钩子格式
 
 钩子支持三种配置格式：
 
 1. **单行字符串**：
+
    ```yaml
    hooks:
      pre_synth: "scripts/pre_synth.tcl"
    ```
-
 2. **多行字符串**：
+
    ```yaml
    hooks:
      pre_build: |
@@ -414,8 +419,8 @@ build:
        python scripts/check_env.py
        echo "环境检查完成"
    ```
-
 3. **命令数组**：
+
    ```yaml
    hooks:
      post_bitstream:
@@ -462,6 +467,7 @@ build:
 ### 开发工具路径配置
 
 FPGABuilder支持通过配置文件指定开发工具的安装路径和版本，这在以下场景中特别有用：
+
 - 系统安装了多个版本的开发工具
 - 开发工具安装在非标准位置
 - 需要确保特定版本的工具被使用
@@ -488,11 +494,11 @@ fpga:
 
 #### 配置说明
 
-| 配置项 | 类型 | 描述 | 示例 |
-|--------|------|------|------|
-| `vivado_path` | 字符串 | Vivado安装路径。可以是：<br>1. `vivado.bat` (Windows) 或 `vivado` (Linux) 可执行文件路径<br>2. Vivado安装目录（自动查找可执行文件）<br>3. 如果未指定，FPGABuilder将自动检测系统安装 | `"C:/Xilinx/Vivado/2019.1"`<br>`"D:/Tools/Vivado/2023.2/bin/vivado.bat"` |
-| `vivado_version` | 字符串 | Vivado版本号，格式：YYYY.N。<br>用于版本兼容性检查，确保使用正确的版本。<br>如果未指定，将从可执行文件或路径中自动检测 | `"2019.1"`<br>`"2023.2"`<br>`"2024.1"` |
-| `vivado_settings` | 对象 | Vivado特定设置，包括：<br>- `default_lib`: 默认库名称<br>- `target_language`: 目标语言（verilog/vhdl）<br>- `synthesis_flow`: 综合流程（out_of_context/project）<br>- `implementation_flow`: 实现流程（project/non_project） | 见上方示例 |
+| 配置项              | 类型   | 描述                                                                                                                                                                                                                                                 | 示例                                                                         |
+| ------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `vivado_path`     | 字符串 | Vivado安装路径。可以是：`<br>`1. `vivado.bat` (Windows) 或 `vivado` (Linux) 可执行文件路径`<br>`2. Vivado安装目录（自动查找可执行文件）`<br>`3. 如果未指定，FPGABuilder将自动检测系统安装                                                  | `"C:/Xilinx/Vivado/2019.1"<br>``"D:/Tools/Vivado/2023.2/bin/vivado.bat"` |
+| `vivado_version`  | 字符串 | Vivado版本号，格式：YYYY.N。`<br>`用于版本兼容性检查，确保使用正确的版本。`<br>`如果未指定，将从可执行文件或路径中自动检测                                                                                                                       | `"2019.1"<br>``"2023.2"<br>``"2024.1"`                                 |
+| `vivado_settings` | 对象   | Vivado特定设置，包括：`<br>`- `default_lib`: 默认库名称`<br>`- `target_language`: 目标语言（verilog/vhdl）`<br>`- `synthesis_flow`: 综合流程（out_of_context/project）`<br>`- `implementation_flow`: 实现流程（project/non_project） | 见上方示例                                                                   |
 
 #### 工作流程
 
@@ -511,6 +517,7 @@ fpga:
 #### 版本兼容性
 
 FPGABuilder支持Vivado 2018.0至2024.2版本：
+
 - **2019.x**: 使用Vivado2019Adapter（新增）
 - **2023.x**: 使用Vivado2023Adapter
 - **2024.x**: 使用Vivado2024Adapter
@@ -521,6 +528,7 @@ FPGABuilder为Vivado 2019.1提供了专门的适配器，确保版本兼容性�
 #### 配置验证
 
 使用以下命令验证配置：
+
 ```bash
 # 验证配置文件语法
 FPGABuilder validate
@@ -705,17 +713,20 @@ FPGABuilder build --remote user@server:/home/user/build
 #### 3. 工具检测失败
 
 **症状**：
+
 ```
 错误：未检测到Vivado安装
 警告：Vivado版本不匹配: 配置版本=2023.2, 实际版本=2019.1
 ```
 
 **解决方法**：
+
 1. **检查开发工具安装**：
+
    - 确认Vivado已正确安装
    - 验证Vivado可执行文件路径在系统PATH中
-
 2. **配置工具路径**（推荐）：
+
    - 在 `fpga_project.yaml` 中添加 `vivado_path` 和 `vivado_version` 配置
    - 示例：
      ```yaml
@@ -723,17 +734,17 @@ FPGABuilder build --remote user@server:/home/user/build
        vivado_path: "C:/Xilinx/Vivado/2023.2"
        vivado_version: "2023.2"
      ```
-
 3. **版本兼容性检查**：
+
    - FPGABuilder支持Vivado 2018.0-2024.2版本
    - 如果使用2019.1等早期版本，某些高级功能可能受限
    - 建议升级到2023.2或更新版本以获得最佳体验
-
 4. **环境变量设置**：
+
    - Windows: 设置 `VIVADO_HOME` 环境变量
    - Linux: 确保Vivado安装目录在PATH中
-
 5. **详细检测**：
+
    ```bash
    # 显示工具检测详情
    FPGABuilder --verbose plugins list
@@ -851,6 +862,7 @@ source:
 ```
 
 **工作流程**：
+
 1. FPGABuilder创建工程并导入源文件
 2. 设置IP库路径 (ip_repo)
 3. 执行 `source system.tcl` 恢复BD设计
@@ -859,8 +871,9 @@ source:
 6. 继续构建流程（综合、实现、比特流生成）
 
 **注意事项**：
+
 - 确保TCL脚本包含完整的BD创建命令
-- 如果使用`bd_file`而不是`tcl_script`，FPGABuilder会直接加载.bd文件
+- 如果使用 `bd_file`而不是 `tcl_script`，FPGABuilder会直接加载.bd文件
 - `is_top: true` 将BD设置为顶层设计
 - 包装器生成后，顶层模块会自动设置为包装器模块
 

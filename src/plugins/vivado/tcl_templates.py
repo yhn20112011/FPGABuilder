@@ -318,6 +318,15 @@ class BDRecoveryTemplate(TCLTemplateBase):
                 lines.append('')
             else:
                 lines.append('# Block Design是顶层设计，包装器已设置为顶层模块')
+                bd_file_basename = os.path.basename(self.tcl_script)
+                bd_file_name, ext = os.path.splitext(bd_file_basename)
+                lines.append(f'generate_target all [get_files {bd_file_name + ".bd"}]')
+                lines.append(f'make_wrapper -files [get_files {bd_file_name + ".bd"}] -top')
+                lines.append(f'add_files -norecurse ${{origin_dir}}/{self.project_name}/{self.project_name}.srcs/sources_1/bd/{bd_file_name}/hdl/{bd_file_name}_wrapper.v')
+                lines.append('update_compile_order -fileset sources_1')
+                lines.append(f'set_property top {bd_file_name}_wrapper [current_fileset]')
+                lines.append('update_compile_order -fileset sources_1')
+               
                 lines.append('')
 
         return '\n'.join(lines)
