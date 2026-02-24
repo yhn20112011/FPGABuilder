@@ -113,26 +113,26 @@ class Packager:
             return False
 
         # 创建临时spec文件
-        spec_content = f"""
+        spec_content = fr"""
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
 
 a = Analysis(
-    ['{str(self.project_root / "src" / "core" / "cli.py")}'],
-    pathex=[],
+    ['{(self.project_root / "src" / "core" / "cli.py").as_posix()}'],
+    pathex=['{(self.project_root).as_posix()}'],
     binaries=[],
     datas=[
-        ('{str(self.project_root / "src" / "core")}', 'core'),
-        ('{str(self.project_root / "src" / "plugins")}', 'plugins'),
-        ('{str(self.project_root / "src" / "templates")}', 'templates'),
-        ('{str(self.project_root / "src" / "utils")}', 'utils'),
+        ('{(self.project_root / "src" / "core").as_posix()}', 'core'),
+        ('{(self.project_root / "src" / "plugins").as_posix()}', 'plugins'),
+        ('{(self.project_root / "src" / "templates").as_posix()}', 'templates'),
+        ('{(self.project_root / "src" / "utils").as_posix()}', 'utils'),
     ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={{}},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['plugins'],
     noarchive=False,
     optimize=2,
     upx=False,
@@ -171,7 +171,10 @@ exe = EXE(
             f.write(spec_content)
 
         # 运行PyInstaller
-        cmd = [sys.executable, "-m", "PyInstaller", "--clean", str(spec_file)]
+        cmd = [sys.executable, "-m", "PyInstaller", "--clean",
+               "--distpath", str(self.output_dir),
+               "--workpath", str(self.project_root / "build"),
+               str(spec_file)]
 
         # 单文件模式已通过spec文件配置
         # 不再添加--onefile选项以避免冲突
@@ -187,14 +190,13 @@ exe = EXE(
             print(f"构建可执行文件失败: {result.stderr}")
             return False
 
-        # 移动可执行文件到输出目录
-        dist_dir = self.project_root / "dist"
-        if dist_dir.exists():
-            for exe_file in dist_dir.glob("FPGABuilder*"):
+        # 检查可执行文件是否已创建
+        if self.output_dir.exists():
+            for exe_file in self.output_dir.glob("FPGABuilder*"):
                 if exe_file.is_file():
-                    target_file = self.output_dir / exe_file.name
-                    shutil.copy2(exe_file, target_file)
-                    print(f"可执行文件已创建: {target_file}")
+                    print(f"可执行文件已创建: {exe_file}")
+        else:
+            print("警告: 未找到可执行文件，可能构建失败")
 
         print("独立可执行文件构建完成")
         return True
@@ -208,10 +210,29 @@ exe = EXE(
             return False
 
         # 检查Inno Setup是否安装
-        inno_paths = [
-            Path("C:/Program Files (x86)/Inno Setup 6/iscc.exe"),
-            Path("C:/Program Files/Inno Setup 6/iscc.exe"),
+        inno_paths = []
+        # 从环境变量获取程序文件路径
+        program_files_x86 = os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")
+        program_files = os.environ.get("PROGRAMFILES", "C:/Program Files")
+
+        # 常见安装路径
+        possible_paths = [
+            f"{program_files_x86}/Inno Setup 6/iscc.exe",
+            f"{program_files}/Inno Setup 6/iscc.exe",
+            f"{program_files_x86}/Inno Setup 6.7.1/iscc.exe",
+            f"{program_files}/Inno Setup 6.7.1/iscc.exe",
+            f"{program_files_x86}/Inno Setup/iscc.exe",
+            f"{program_files}/Inno Setup/iscc.exe",
+            "C:/Inno Setup/iscc.exe",
         ]
+
+        # 检查环境变量ISCC
+        iscc_env = os.environ.get("ISCC")
+        if iscc_env:
+            possible_paths.insert(0, iscc_env)
+
+        # 转换为Path对象
+        inno_paths = [Path(p) for p in possible_paths]
 
         inno_compiler = None
         for path in inno_paths:
@@ -289,20 +310,37 @@ end;
         # 替换版本号
         iss_content = iss_content.replace("{version}", self.version)
 
+        # 修复预处理变量语法
+        iss_content = iss_content.replace("{{#MyAppName}}", "{#MyAppName}")
+        iss_content = iss_content.replace("{{#MyAppVersion}}", "{#MyAppVersion}")
+        iss_content = iss_content.replace("{{#MyAppPublisher}}", "{#MyAppPublisher}")
+        iss_content = iss_content.replace("{{#MyAppURL}}", "{#MyAppURL}")
+        iss_content = iss_content.replace("{{#MyAppExeName}}", "{#MyAppExeName}")
+        iss_content = iss_content.replace("{{#OutputDir}}", "{#OutputDir}")
+        iss_content = iss_content.replace("{{#StringChange", "{#StringChange")
+        iss_content = iss_content.replace(")}}", ")}")
+        iss_content = iss_content.replace("{{src}}", "{#src}")
+        # 移除中文语言支持（避免缺失文件错误）
+        iss_content = iss_content.replace('Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"\n', '')
+
         # 写入ISS文件
         iss_file = self.project_root / "FPGABuilder.iss"
         with open(iss_file, "w", encoding="utf-8") as f:
             f.write(iss_content)
 
         # 运行Inno Setup编译器
-        cmd = [str(inno_compiler), f"/O{self.output_dir}", str(iss_file)]
+        cmd = [str(inno_compiler), f"/O{self.output_dir}",
+               f"/DOutputDir={self.output_dir}",
+               f"/Dsrc={self.project_root}", str(iss_file)]
 
         print(f"执行命令: {' '.join(cmd)}")
-        result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True, encoding='utf-8', errors='ignore')
 
-        # 清理ISS文件
-        if iss_file.exists():
+        # 清理ISS文件（仅在成功时）
+        if result.returncode == 0 and iss_file.exists():
             iss_file.unlink()
+        elif iss_file.exists():
+            print(f"ISS文件保留以供调试: {iss_file}")
 
         if result.returncode != 0:
             print(f"构建安装程序失败: {result.stderr}")
