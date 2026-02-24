@@ -107,6 +107,7 @@ setup(
             "mkdocstrings>=0.23.0",
         ],
         "packaging": [
+            "build>=1.0.0",
             "pyinstaller>=5.0.0",
             "setuptools>=65.0.0",
             "wheel>=0.40.0",
@@ -130,6 +131,7 @@ setup(
             "black>=23.0.0",
             "flake8>=6.0.0",
             "mypy>=1.0.0",
+            "build>=1.0.0",
             "pyinstaller>=5.0.0",
             "windows-curses>=2.3.0; sys_platform == 'win32'",
         ],

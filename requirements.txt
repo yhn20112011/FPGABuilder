@@ -31,6 +31,12 @@ aiohttp>=3.8.0
 # 注意：以下依赖已移动到setup.py的extras_require中：
 # - 文档生成 (docs): mkdocs, mkdocs-material, mkdocstrings
 # - 测试开发 (dev): pytest, pytest-cov, black, flake8, mypy
-# - 打包工具 (packaging): pyinstaller, setuptools, wheel
+# - 打包工具 (packaging): build, pyinstaller, setuptools, wheel
 # - GUI支持 (gui): windows-curses (Windows)
 # - FPGA工具链 (vivado/quartus): 工具特定依赖
+
+# 构建依赖（用于python scripts/package.py --all）：
+# build>=1.0.0
+# pyinstaller>=5.0.0
+# setuptools>=65.0.0
+# wheel>=0.40.0
