@@ -1422,3 +1422,54 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 - 配置`wrapper_language: "verilog"`（默认）→ 生成`system_wrapper.v`
 - 如配置`wrapper_language: "vhdl"` → 应生成`system_wrapper.vhd`
 - wrapper文件生成和顶层设置功能基本正常，但脚本返回错误需进一步调试
+
+### 新增功能：IP核仓库路径配置
+
+完成时间：2026-02-24
+任务：在yaml配置中添加设置IP核仓库路径的参数，默认IP仓库添加工程根目录中的ip_repo
+
+#### 实现内容
+
+1. **配置Schema扩展**：
+   - 在`src/core/config.py`中添加`ip_repo_paths`字段到source部分
+   - 类型：字符串数组，默认值：`["ip_repo"]`
+   - 支持用户自定义多个IP核仓库路径
+
+2. **TCL模板更新**：
+   - 修改`src/plugins/vivado/tcl_templates.py`中的`BasicProjectTemplate.render()`方法
+   - 在创建工程后自动添加`set_property IP_REPO_PATHS`命令
+   - 自动执行`update_ip_catalog`刷新IP目录
+
+3. **默认配置更新**：
+   - 更新`ConfigManager.create_default_config()`方法，默认包含`ip_repo_paths: ['ip_repo']`
+
+4. **配置示例**：
+```yaml
+source:
+  ip_repo_paths:
+    - "ip_repo"        # 默认IP核仓库
+    - "lib/ip"         # 自定义IP核仓库
+    - "../shared_ip"   # 共享IP核仓库
+```
+
+#### 测试验证
+
+- 单元测试验证：配置Schema接受新字段 ✅
+- 单元测试验证：TCL模板正确生成IP_REPO_PATHS命令 ✅
+- 实际项目测试：在`test_zynq_project`中添加配置，功能待验证
+
+#### 注意事项
+
+- IP仓库路径应为相对路径（相对于项目根目录）
+- Vivado会自动解析相对路径
+- 多个路径将按顺序添加到IP_REPO_PATHS列表中
+
+#### 后续工作
+
+- 验证在实际Vivado工程中IP核仓库路径设置是否生效
+- 更新用户文档详细说明IP核仓库配置方法
+- 考虑支持绝对路径和路径变量扩展
+
+### 当前状态总结
+
+已完成IP核仓库路径配置功能的代码实现，配置Schema和TCL生成逻辑均已更新。待进一步在实际工程中验证功能完整性。

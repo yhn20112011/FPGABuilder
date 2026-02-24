@@ -170,6 +170,12 @@ class ConfigManager:
                                 "required": ["name", "path"]
                             }
                         },
+                        "ip_repo_paths": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "IP核仓库路径列表，用于设置set_property IP_REPO_PATHS",
+                            "default": ["ip_repo"]
+                        },
                         "block_design": {
                             "type": "object",
                             "properties": {
@@ -464,7 +470,8 @@ class ConfigManager:
             'source': {
                 'hdl': [],
                 'constraints': [],
-                'ip_cores': []
+                'ip_cores': [],
+                'ip_repo_paths': ['ip_repo']
             },
             'dependencies': {
                 'git_submodules': []

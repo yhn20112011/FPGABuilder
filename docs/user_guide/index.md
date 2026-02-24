@@ -311,6 +311,9 @@ source:
     - name: "axi_uart"
       path: "src/ip/axi_uart.xci"
       type: "xilinx"
+  ip_repo_paths:
+    - "ip_repo"        # 默认IP核仓库路径
+    - "lib/ip"         # 自定义IP核仓库路径
 ```
 
 ### 依赖配置

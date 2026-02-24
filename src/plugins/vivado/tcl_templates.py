@@ -89,6 +89,17 @@ class BasicProjectTemplate(TCLTemplateBase):
         lines.append('set_property target_language Verilog [current_project]')
         lines.append('')
 
+        # 设置IP库路径
+        lines.append('# 设置IP库路径')
+        ip_repo_paths = self.config.get('source', {}).get('ip_repo_paths', ['ip_repo'])
+        if ip_repo_paths:
+            # 将路径列表转换为TCL列表格式
+            paths_list = ' '.join(['{' + path + '}' for path in ip_repo_paths])
+            lines.append(f'set_property IP_REPO_PATHS [list {paths_list}] [current_project]')
+            # 刷新IP目录
+            lines.append('update_ip_catalog')
+        lines.append('')
+
         return '\n'.join(lines)
 
 
