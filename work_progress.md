@@ -1374,23 +1374,24 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 ### 已完成
 
 1. ✅ **修复wrapper文件扩展名适配**：
-   - 根据`wrapper_language`配置自动选择`.v`（Verilog）或`.vhd`（VHDL）扩展名
-   - 修复路径变量引用，正确使用`${project_name}`和`${bd_name}`TCL变量
 
+   - 根据 `wrapper_language`配置自动选择 `.v`（Verilog）或 `.vhd`（VHDL）扩展名
+   - 修复路径变量引用，正确使用 `${project_name}`和 `${bd_name}`TCL变量
 2. ✅ **修复重复设置顶层模块问题**：
+
    - 避免在自动包装器生成后重复设置顶层模块
-   - 当`generate_wrapper=True`且`auto_wrapper=True`时，顶层模块已在自动生成逻辑中设置
+   - 当 `generate_wrapper=True`且 `auto_wrapper=True`时，顶层模块已在自动生成逻辑中设置
    - 修复第319-328行代码，避免重复执行
-
 3. ✅ **修复TCL脚本路径问题**：
-   - 使用`file normalize`确保`source`命令使用的TCL脚本路径正确
+
+   - 使用 `file normalize`确保 `source`命令使用的TCL脚本路径正确
    - 避免相对路径导致的文件查找失败
-
 4. ✅ **添加调试功能**：
-   - 修改`_run_vivado_tcl`方法，在Vivado执行失败时保存TCL脚本用于调试
-   - 输出更详细的错误信息便于问题诊断
 
+   - 修改 `_run_vivado_tcl`方法，在Vivado执行失败时保存TCL脚本用于调试
+   - 输出更详细的错误信息便于问题诊断
 5. ✅ **提交git修改**：
+
    - 提交哈希：5693b90
    - 修改文件：`src/plugins/vivado/plugin.py`、`src/plugins/vivado/tcl_templates.py`
    - 提交消息：修复BD恢复时wrapper生成问题并完善工具链适配
@@ -1399,7 +1400,7 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 
 - **wrapper生成逻辑**：已完善，支持Verilog和VHDL扩展名适配
 - **顶层模块设置**：避免重复设置，逻辑更清晰
-- **路径处理**：使用`file normalize`提高健壮性
+- **路径处理**：使用 `file normalize`提高健壮性
 - **调试支持**：增强错误诊断能力
 
 ### 遗留问题
@@ -1410,7 +1411,7 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 
 ### 建议后续步骤
 
-1. 运行prepare命令并检查生成的调试TCL脚本`debug_prepare_project.tcl`
+1. 运行prepare命令并检查生成的调试TCL脚本 `debug_prepare_project.tcl`
 2. 查看Vivado详细错误输出，确定具体失败点
 3. 如果错误是良性的（如警告被视为错误），考虑调整错误处理逻辑
 4. 在实际VHDL项目（使用VHDL wrapper）中测试扩展名适配功能
@@ -1418,9 +1419,10 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 
 ### 测试验证
 
-在`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`工程中测试：
-- 配置`wrapper_language: "verilog"`（默认）→ 生成`system_wrapper.v`
-- 如配置`wrapper_language: "vhdl"` → 应生成`system_wrapper.vhd`
+在 `E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`工程中测试：
+
+- 配置 `wrapper_language: "verilog"`（默认）→ 生成 `system_wrapper.v`
+- 如配置 `wrapper_language: "vhdl"` → 应生成 `system_wrapper.vhd`
 - wrapper文件生成和顶层设置功能基本正常，但脚本返回错误需进一步调试
 
 ### 新增功能：IP核仓库路径配置
@@ -1431,19 +1433,20 @@ def prepare_and_open_gui(self, config: Dict[str, Any]) -> BuildResult:
 #### 实现内容
 
 1. **配置Schema扩展**：
-   - 在`src/core/config.py`中添加`ip_repo_paths`字段到source部分
+
+   - 在 `src/core/config.py`中添加 `ip_repo_paths`字段到source部分
    - 类型：字符串数组，默认值：`["ip_repo"]`
    - 支持用户自定义多个IP核仓库路径
-
 2. **TCL模板更新**：
-   - 修改`src/plugins/vivado/tcl_templates.py`中的`BasicProjectTemplate.render()`方法
-   - 在创建工程后自动添加`set_property IP_REPO_PATHS`命令
-   - 自动执行`update_ip_catalog`刷新IP目录
 
+   - 修改 `src/plugins/vivado/tcl_templates.py`中的 `BasicProjectTemplate.render()`方法
+   - 在创建工程后自动添加 `set_property IP_REPO_PATHS`命令
+   - 自动执行 `update_ip_catalog`刷新IP目录
 3. **默认配置更新**：
-   - 更新`ConfigManager.create_default_config()`方法，默认包含`ip_repo_paths: ['ip_repo']`
 
+   - 更新 `ConfigManager.create_default_config()`方法，默认包含 `ip_repo_paths: ['ip_repo']`
 4. **配置示例**：
+
 ```yaml
 source:
   ip_repo_paths:
@@ -1456,7 +1459,7 @@ source:
 
 - 单元测试验证：配置Schema接受新字段 ✅
 - 单元测试验证：TCL模板正确生成IP_REPO_PATHS命令 ✅
-- 实际项目测试：在`test_zynq_project`中添加配置，功能待验证
+- 实际项目测试：在 `test_zynq_project`中添加配置，功能待验证
 
 #### 注意事项
 
@@ -1479,18 +1482,24 @@ source:
 ### 修复prepare命令BD恢复问题并完成基本功能测试
 
 #### 问题分析
+
 用户报告FPGABuilder prepare命令生成debug_prepare_project.tcl，Vivado执行失败。经测试发现TCL脚本路径花括号错误：
+
 - 生成的TCL命令：`set tcl_script_path [file normalize "{src/bd/system.tcl}"]`
 - 错误：Vivado尝试打开字面包含花括号的文件路径 `E:/.../{src/bd/system.tcl}`
 
 #### 修复方案
+
 修改 `src/plugins/vivado/tcl_templates.py` 第132行：
+
 - 原代码：`lines.append(f'set tcl_script_path [file normalize "{{{self.tcl_script}}}"]')`
 - 修复后：`lines.append(f'set tcl_script_path [file normalize {{{self.tcl_script}}}]')`
 - 移除多余双引号，确保生成正确的TCL命令：`set tcl_script_path [file normalize {src/bd/system.tcl}]`
 
 #### 测试验证
+
 在 `E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project` 中测试：
+
 1. **prepare命令**：✅ 成功
    - Vivado TCL脚本执行成功，返回码0
    - 工程创建成功，位置：`./build/project`
@@ -1507,9 +1516,16 @@ source:
    - 文件扫描、工程创建、BD恢复、wrapper生成、顶层设置均工作正常
 
 #### 提交记录
+
 - **提交哈希**：2a0e77f
 - **修改文件**：`src/plugins/vivado/tcl_templates.py`
 - **提交消息**：修复BD恢复时TCL脚本路径花括号错误
 
 #### 结论
+
 FPGABuilder prepare命令已修复，可以成功恢复BD并生成wrapper文件。工具链核心功能验证通过，满足基本使用需求。建议用户使用 `FPGABuilder prepare` 创建工程，然后使用 `FPGABuilder vivado gui` 打开工程进行后续操作。
+
+
+## 2026-02-24 16:16:00
+
+修复包装器语言选择为vhdl时bd恢复失败的bug

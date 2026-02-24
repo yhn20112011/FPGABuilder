@@ -215,7 +215,11 @@ class BDRecoveryTemplate(TCLTemplateBase):
 
 
                 lines.append('')
+                # 根据包装器语言选择文件扩展名以及目标语言
+                wrapper_ext = '.vhd' if self.wrapper_language == 'vhdl' else '.v'
+                target_language = 'VHDL' if self.wrapper_language == 'vhdl' else 'Verilog'
 
+                lines.append(f'set_property target_language {target_language} [current_project]')
 
                 lines.append('puts "生成HDL包装器..."')
 
@@ -230,8 +234,7 @@ class BDRecoveryTemplate(TCLTemplateBase):
 
 
                 lines.append('# 构建包装器文件路径并添加')
-                # 根据包装器语言选择文件扩展名
-                wrapper_ext = '.vhd' if self.wrapper_language == 'vhdl' else '.v'
+                
                 lines.append(f'set wrapper_path [file join $project_dir "${{project_name}}.srcs" "sources_1" "bd" $bd_name "hdl" "${{bd_name}}_wrapper{wrapper_ext}"]')
 
 
