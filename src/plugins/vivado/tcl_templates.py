@@ -129,7 +129,7 @@ class BDRecoveryTemplate(TCLTemplateBase):
         # 如果有TCL脚本，使用TCL脚本恢复BD
         if self.tcl_script:
             lines.append('# 从TCL脚本恢复Block Design')
-            lines.append(f'set tcl_script_path [file normalize "{{{self.tcl_script}}}"]')
+            lines.append(f'set tcl_script_path [file normalize {{{self.tcl_script}}}]')
             lines.append('source $tcl_script_path')
         # 否则直接加载BD文件
         elif self.bd_file:
