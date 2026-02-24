@@ -25,7 +25,7 @@ pip uninstall FPGABuilder
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/FPGABuilder.git
+git clone https://github.com/yhn20112011/FPGABuilder.git
 cd FPGABuilder
 
 # 安装依赖
@@ -282,8 +282,8 @@ project:
   name: "my_fpga_project"
   version: "1.0.0"
   description: "示例FPGA工程"
-  author: "Your Name"
-  license: "MIT"
+  author: "YiHok"
+  license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"
 
 fpga:
   vendor: "xilinx"

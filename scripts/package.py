@@ -256,8 +256,8 @@ exe = EXE(
 
 #define MyAppName "FPGABuilder"
 #define MyAppVersion "{version}"
-#define MyAppPublisher "FPGABuilder Team"
-#define MyAppURL "https://github.com/yourusername/FPGABuilder"
+#define MyAppPublisher "YiHok"
+#define MyAppURL "https://github.com/yhn20112011/FPGABuilder"
 #define MyAppExeName "FPGABuilder.exe"
 
 [Setup]

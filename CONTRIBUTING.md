@@ -13,7 +13,7 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/FPGABuilder.git
+git clone https://github.com/yhn20112011/FPGABuilder.git
 cd FPGABuilder
 ```
 
@@ -254,8 +254,8 @@ mkdocs build
 
 ## 获取帮助
 
-- 查看[文档](https://yourusername.github.io/FPGABuilder/)
-- 在[GitHub Discussions](https://github.com/yourusername/FPGABuilder/discussions)提问
-- 查看现有[Issues](https://github.com/yourusername/FPGABuilder/issues)
+- 查看[文档](https://yhn20112011.github.io/FPGABuilder/)
+- 在[GitHub Discussions](https://github.com/yhn20112011/FPGABuilder/discussions)提问
+- 查看现有[Issues](https://github.com/yhn20112011/FPGABuilder/issues)
 
 感谢您的贡献！

@@ -26,7 +26,7 @@ FPGABuilder是一个跨平台的FPGA自动构建工具链，支持Windows环境�
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/FPGABuilder.git
+git clone https://github.com/yhn20112011/FPGABuilder.git
 cd FPGABuilder
 
 # 安装依赖
@@ -338,13 +338,15 @@ FPGABuilder支持插件扩展，可以添加：
 
 ## 支持
 
-- 问题反馈：[GitHub Issues](https://github.com/yourusername/FPGABuilder/issues)
-- 功能请求：[GitHub Discussions](https://github.com/yourusername/FPGABuilder/discussions)
-- 文档：[在线文档](https://yourusername.github.io/FPGABuilder/)
+- 问题反馈：[GitHub Issues](https://github.com/yhn20112011/FPGABuilder/issues)
+- 功能请求：[GitHub Discussions](https://github.com/yhn20112011/FPGABuilder/discussions)
+- 文档：[在线文档](https://yhn20112011.github.io/FPGABuilder/)
 
 ## 许可证
 
-本项目采用MIT许可证。详见[LICENSE](LICENSE)文件。
+本项目采用 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)。详见[LICENSE](LICENSE)文件。
+
+未经本人书面授权任何人不得商用，本人保留一切权力。
 
 ## 开发指南
 

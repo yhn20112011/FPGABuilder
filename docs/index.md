@@ -55,10 +55,12 @@ FPGABuilder方式：
 
 ## 获取帮助
 
-- [GitHub Issues](https://github.com/yourusername/FPGABuilder/issues) - 报告问题和缺陷
-- [GitHub Discussions](https://github.com/yourusername/FPGABuilder/discussions) - 提问和讨论
-- [在线文档](https://yourusername.github.io/FPGABuilder/) - 最新文档
+- [GitHub Issues](https://github.com/yhn20112011/FPGABuilder/issues) - 报告问题和缺陷
+- [GitHub Discussions](https://github.com/yhn20112011/FPGABuilder/discussions) - 提问和讨论
+- [在线文档](https://yhn20112011.github.io/FPGABuilder/) - 最新文档
 
 ## 许可证
 
-本项目采用MIT许可证。详见[LICENSE](../LICENSE)文件。
+本项目采用 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)。详见[LICENSE](../LICENSE)文件。
+
+未经本人书面授权任何人不得商用，本人保留一切权力。

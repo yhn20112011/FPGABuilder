@@ -459,8 +459,8 @@ class ConfigManager:
                 'name': project_name,
                 'version': '1.0.0',
                 'description': f'{project_name} FPGA工程',
-                'author': '',
-                'license': 'MIT'
+                'author': 'YiHok',
+                'license': 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International'
             },
             'fpga': {
                 'vendor': vendor,
@@ -544,8 +544,8 @@ class ProjectConfig(BaseModel):
     name: str
     version: str
     description: Optional[str] = ""
-    author: Optional[str] = ""
-    license: Optional[str] = "MIT"
+    author: Optional[str] = "YiHok"
+    license: Optional[str] = "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"
 
 
 class FPGAConfig(BaseModel):

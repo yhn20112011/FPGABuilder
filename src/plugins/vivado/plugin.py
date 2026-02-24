@@ -68,7 +68,7 @@ class VivadoPlugin(FPGAVendorPlugin):
 
     @property
     def author(self) -> str:
-        return "FPGABuilder Team"
+        return "YiHok"
 
     @property
     def supported_families(self) -> List[str]:

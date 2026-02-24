@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dir:*)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(git add:*)"
     ]
   }
 }

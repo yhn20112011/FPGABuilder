@@ -150,7 +150,9 @@ FPGABuilder bitstream
 
 ## 许可证
 
-MIT License
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)
+
+未经本人书面授权任何人不得商用，本人保留一切权力。
 """
 
         with open(project_path / 'README.md', 'w', encoding='utf-8') as f:

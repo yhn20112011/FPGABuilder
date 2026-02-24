@@ -5,5 +5,5 @@ FPGABuilder - FPGA自动构建工具链
 """
 
 __version__ = "0.2.0"
-__author__ = "FPGABuilder Team"
-__license__ = "MIT"
+__author__ = "YiHok"
+__license__ = "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"

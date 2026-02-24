@@ -3,8 +3,8 @@ FPGABuilder核心模块
 """
 
 __version__ = "0.2.0"
-__author__ = "FPGABuilder Team:Yihok"
-__license__ = "MIT"
+__author__ = "YiHok"
+__license__ = "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"
 
 from .config import ConfigManager
 from .project import ProjectManager
