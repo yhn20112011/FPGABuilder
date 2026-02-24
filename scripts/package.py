@@ -391,9 +391,9 @@ end;
                 print(f"  - {file.name} {size_str}")
 
         if success:
-            print(f"\n✅ 打包完成！文件保存在: {self.output_dir}")
+            print(f"\n[OK] 打包完成！文件保存在: {self.output_dir}")
         else:
-            print(f"\n⚠️  打包完成，但有警告。文件保存在: {self.output_dir}")
+            print(f"\n[WARN] 打包完成，但有警告。文件保存在: {self.output_dir}")
 
         return success
 
