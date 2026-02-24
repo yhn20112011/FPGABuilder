@@ -118,7 +118,8 @@ class BDRecoveryTemplate(TCLTemplateBase):
         # 如果有TCL脚本，使用TCL脚本恢复BD
         if self.tcl_script:
             lines.append('# 从TCL脚本恢复Block Design')
-            lines.append(f'source {{{self.tcl_script}}}')
+            lines.append(f'set tcl_script_path [file normalize "{{{self.tcl_script}}}"]')
+            lines.append('source $tcl_script_path')
         # 否则直接加载BD文件
         elif self.bd_file:
             lines.append('# 加载Block Design文件')
@@ -218,9 +219,9 @@ class BDRecoveryTemplate(TCLTemplateBase):
 
 
                 lines.append('# 构建包装器文件路径并添加')
-
-
-                lines.append('set wrapper_path [file join $project_dir "${project_name}.srcs" "sources_1" "bd" $bd_name "hdl" "${bd_name}_wrapper.v"]')
+                # 根据包装器语言选择文件扩展名
+                wrapper_ext = '.vhd' if self.wrapper_language == 'vhdl' else '.v'
+                lines.append(f'set wrapper_path [file join $project_dir "${{project_name}}.srcs" "sources_1" "bd" $bd_name "hdl" "${{bd_name}}_wrapper{wrapper_ext}"]')
 
 
                 lines.append('puts "包装器文件路径: $wrapper_path"')
@@ -317,16 +318,10 @@ class BDRecoveryTemplate(TCLTemplateBase):
                 lines.append(f'set_property top [current_bd_design] [current_fileset]')
                 lines.append('')
             else:
-                lines.append('# Block Design是顶层设计，包装器已设置为顶层模块')
-                bd_file_basename = os.path.basename(self.tcl_script)
-                bd_file_name, ext = os.path.splitext(bd_file_basename)
-                lines.append(f'generate_target all [get_files {bd_file_name + ".bd"}]')
-                lines.append(f'make_wrapper -files [get_files {bd_file_name + ".bd"}] -top')
-                lines.append(f'add_files -norecurse ${{origin_dir}}/{self.project_name}/{self.project_name}.srcs/sources_1/bd/{bd_file_name}/hdl/{bd_file_name}_wrapper.v')
-                lines.append('update_compile_order -fileset sources_1')
-                lines.append(f'set_property top {bd_file_name}_wrapper [current_fileset]')
-                lines.append('update_compile_order -fileset sources_1')
-               
+                # 包装器已由自动包装器生成逻辑设置，BD是顶层设计
+                # 无需额外操作，顶层模块已在前面的自动包装器生成逻辑中设置
+                lines.append('# 包装器已由自动包装器生成逻辑设置，BD是顶层设计')
+                lines.append('# 顶层模块已在前面的自动包装器生成逻辑中设置')
                 lines.append('')
 
         return '\n'.join(lines)

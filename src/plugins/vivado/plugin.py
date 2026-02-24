@@ -214,8 +214,15 @@ class VivadoPlugin(FPGAVendorPlugin):
                 print("Vivado TCL脚本执行成功")
             else:
                 print(f"Vivado TCL脚本执行失败，返回码: {result.returncode}")
+                # 保存TCL脚本用于调试
+                debug_tcl_path = Path.cwd() / f"debug_{script_name}"
+                with open(debug_tcl_path, 'w', encoding='utf-8') as f:
+                    f.write(tcl_script)
+                print(f"调试: TCL脚本已保存到 {debug_tcl_path}")
+                if result.stdout:
+                    print(f"标准输出: {result.stdout[:1000]}")
                 if result.stderr:
-                    print(f"错误输出: {result.stderr[:500]}")
+                    print(f"错误输出: {result.stderr[:1000]}")
 
             return BuildResult(
                 success=success,
