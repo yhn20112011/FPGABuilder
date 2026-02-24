@@ -1473,3 +1473,43 @@ source:
 ### 当前状态总结
 
 已完成IP核仓库路径配置功能的代码实现，配置Schema和TCL生成逻辑均已更新。待进一步在实际工程中验证功能完整性。
+
+## 2026-02-24 14:40:00
+
+### 修复prepare命令BD恢复问题并完成基本功能测试
+
+#### 问题分析
+用户报告FPGABuilder prepare命令生成debug_prepare_project.tcl，Vivado执行失败。经测试发现TCL脚本路径花括号错误：
+- 生成的TCL命令：`set tcl_script_path [file normalize "{src/bd/system.tcl}"]`
+- 错误：Vivado尝试打开字面包含花括号的文件路径 `E:/.../{src/bd/system.tcl}`
+
+#### 修复方案
+修改 `src/plugins/vivado/tcl_templates.py` 第132行：
+- 原代码：`lines.append(f'set tcl_script_path [file normalize "{{{self.tcl_script}}}"]')`
+- 修复后：`lines.append(f'set tcl_script_path [file normalize {{{self.tcl_script}}}]')`
+- 移除多余双引号，确保生成正确的TCL命令：`set tcl_script_path [file normalize {src/bd/system.tcl}]`
+
+#### 测试验证
+在 `E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project` 中测试：
+1. **prepare命令**：✅ 成功
+   - Vivado TCL脚本执行成功，返回码0
+   - 工程创建成功，位置：`./build/project`
+   - BD恢复成功，生成 `system_wrapper.v`
+   - 顶层模块正确设置为 `system_wrapper`
+2. **wrapper文件生成**：✅ 成功
+   - 文件路径：`build/project.srcs/sources_1/bd/system/hdl/system_wrapper.v`
+   - 文件存在且内容完整
+3. **基本功能测试**：
+   - `vivado gui` 命令：✅ 帮助信息正常显示
+   - `build` 命令：✅ 帮助信息正常显示
+   - `vivado clean` 命令：⚠️ 需要工程已打开（已知限制）
+4. **工具链完整性**：✅ 核心功能正常
+   - 文件扫描、工程创建、BD恢复、wrapper生成、顶层设置均工作正常
+
+#### 提交记录
+- **提交哈希**：2a0e77f
+- **修改文件**：`src/plugins/vivado/tcl_templates.py`
+- **提交消息**：修复BD恢复时TCL脚本路径花括号错误
+
+#### 结论
+FPGABuilder prepare命令已修复，可以成功恢复BD并生成wrapper文件。工具链核心功能验证通过，满足基本使用需求。建议用户使用 `FPGABuilder prepare` 创建工程，然后使用 `FPGABuilder vivado gui` 打开工程进行后续操作。
