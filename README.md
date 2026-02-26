@@ -71,7 +71,47 @@ python scripts/package.py --sdist    # 源代码分发包
 python scripts/package.py --wheel    # Wheel包
 python scripts/package.py --exe      # 独立可执行文件
 python scripts/package.py --installer  # Windows安装程序（仅Windows）
+python scripts/package.py --offline-installer  # Windows离线安装程序（包含Python和所有依赖）
 ```
+
+### Windows离线安装程序
+
+FPGABuilder 0.2.0及以上版本提供了增强的Windows离线安装程序，专为离线环境设计：
+
+**主要特性：**
+- 🚀 **完全离线**：无需网络连接，包含所有Python依赖
+- 🐍 **自包含Python**：通过PyInstaller打包，无需单独安装Python
+- 🔧 **自动环境配置**：安装时可选"将FPGABuilder添加到系统PATH"
+- 🛡️ **管理员权限**：自动请求管理员权限以修改系统环境变量
+- 📦 **依赖检查**：安装前检查系统Python状态和依赖
+- 🔄 **智能卸载**：卸载时自动从PATH中移除安装目录
+
+**使用场景：**
+- 企业内网环境
+- 无Python环境的Windows系统
+- 需要一键部署FPGABuilder的生产环境
+- 需要自动配置PATH的批量部署
+
+**构建命令：**
+```bash
+# 构建离线安装程序（需要Inno Setup 6+）
+python scripts/package.py --offline-installer
+
+# 或构建所有格式（包括离线安装程序）
+python scripts/package.py --all
+```
+
+**安装程序功能：**
+1. 多语言界面（英文/简体中文）
+2. 桌面快捷方式（可选）
+3. 自动PATH环境变量管理
+4. 安装后启动FPGABuilder（可选）
+5. 完善的依赖和Python环境检查
+
+**注意事项：**
+- 需要Windows 7及以上版本（64位推荐）
+- 需要管理员权限以修改系统PATH
+- 安装程序使用Inno Setup 6+构建，确保已安装Inno Setup
 
 ### 清理构建文件
 
