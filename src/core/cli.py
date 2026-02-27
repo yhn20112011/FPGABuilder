@@ -223,13 +223,13 @@ def init(ctx, project_name, vendor, part, template, path):
 module {project_name}_top (
     input wire clk,
     input wire rst_n,
-    input wire [7:0] data_in,
-    output wire [7:0] data_out,
+    input wire  data_in,
+    output wire  data_out,
     output wire valid_out
 );
 
     // 示例：简单的流水线寄存器
-    reg [7:0] data_reg;
+    reg data_reg;
     reg valid_reg;
 
     always @(posedge clk or negedge rst_n) begin

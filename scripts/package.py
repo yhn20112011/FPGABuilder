@@ -125,8 +125,6 @@ a = Analysis(
     datas=[
         ('{(self.project_root / "src" / "core").as_posix()}', 'core'),
         ('{(self.project_root / "src" / "plugins").as_posix()}', 'plugins'),
-        ('{(self.project_root / "src" / "templates").as_posix()}', 'templates'),
-        ('{(self.project_root / "src" / "utils").as_posix()}', 'utils'),
     ],
     hiddenimports=[
         'core.config',
@@ -269,7 +267,7 @@ exe = EXE(
 #define MyAppExeName "FPGABuilder.exe"
 
 [Setup]
-AppId={{{{{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}}}}
+AppId={{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}
 AppName={{#MyAppName}}
 AppVersion={{#MyAppVersion}}
 AppPublisher={{#MyAppPublisher}}
@@ -327,9 +325,10 @@ end;
         iss_content = iss_content.replace("{{#OutputDir}}", "{#OutputDir}")
         iss_content = iss_content.replace("{{#StringChange", "{#StringChange")
         iss_content = iss_content.replace(")}}", ")}")
+        iss_content = iss_content.replace("}}", "}")
         iss_content = iss_content.replace("{{src}}", "{#src}")
         # 移除中文语言支持（避免缺失文件错误）
-        iss_content = iss_content.replace('Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"\n', '')
+        iss_content = iss_content.replace('Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"', '')
 
         # 写入ISS文件
         iss_file = self.project_root / "FPGABuilder.iss"
@@ -408,18 +407,18 @@ end;
             return False
 
         # 创建增强的Inno Setup脚本（离线安装版）
-        iss_content = f"""; FPGABuilder安装脚本 - 离线安装版
+        iss_content = r"""; FPGABuilder安装脚本 - 离线安装版
 ; 由packager.py自动生成
-; 版本: {self.version}
+; 版本: {version}
 
 #define MyAppName "FPGABuilder"
-#define MyAppVersion "{self.version}"
+#define MyAppVersion "{version}"
 #define MyAppPublisher "YiHok"
 #define MyAppURL "https://github.com/yhn20112011/FPGABuilder"
 #define MyAppExeName "FPGABuilder.exe"
 
 [Setup]
-AppId={{{{{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}}}}
+AppId={{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}
 AppName={{#MyAppName}}
 AppVersion={{#MyAppVersion}}
 AppPublisher={{#MyAppPublisher}}
@@ -442,7 +441,6 @@ PrivilegesRequiredOverridesAllowed=dialog
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{{cm:CreateDesktopIcon}}"; GroupDescription: "{{cm:AdditionalIcons}}"; Flags: unchecked
@@ -595,8 +593,6 @@ procedure RemoveFromPath(InstallDir: string);
 var
   PathVar: string;
   NewPath: string;
-  Parts: TArrayOfString;
-  I: Integer;
 begin
   // 读取当前系统PATH
   if not RegQueryStringValue(HKLM, 'SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment', 'Path', PathVar) then
@@ -608,21 +604,20 @@ begin
     end;
   end;
 
-  // 分割PATH并移除安装目录
-  NewPath := '';
+  // 移除安装目录
   StringChangeEx(PathVar, InstallDir, '', True);
 
-  // 清理多余的分号
-  Parts := SplitString(PathVar, ';');
-  for I := 0 to GetArrayLength(Parts) - 1 do
-  begin
-    if Parts[I] <> '' then
-    begin
-      if NewPath <> '' then
-        NewPath := NewPath + ';';
-      NewPath := NewPath + Parts[I];
-    end;
-  end;
+  // 清理多余的分号：替换双分号为单分号
+  while Pos(';;', PathVar) > 0 do
+    StringChangeEx(PathVar, ';;', ';', True);
+
+  // 移除开头和结尾的分号
+  if (Length(PathVar) > 0) and (PathVar[1] = ';') then
+    Delete(PathVar, 1, 1);
+  if (Length(PathVar) > 0) and (PathVar[Length(PathVar)] = ';') then
+    Delete(PathVar, Length(PathVar), 1);
+
+  NewPath := PathVar;
 
   // 写回注册表
   if IsAdminLoggedOn then
@@ -688,6 +683,33 @@ begin
   end;
 end;
 """
+        # 替换版本号占位符
+        iss_content = iss_content.replace("{version}", self.version)
+
+        # 修复预处理变量语法
+        iss_content = iss_content.replace("{{#MyAppName}}", "{#MyAppName}")
+        iss_content = iss_content.replace("{{#MyAppVersion}}", "{#MyAppVersion}")
+        iss_content = iss_content.replace("{{#MyAppPublisher}}", "{#MyAppPublisher}")
+        iss_content = iss_content.replace("{{#MyAppURL}}", "{#MyAppURL}")
+        iss_content = iss_content.replace("{{#MyAppExeName}}", "{#MyAppExeName}")
+        iss_content = iss_content.replace("{{#OutputDir}}", "{#OutputDir}")
+        iss_content = iss_content.replace("{{#src}}", "{#src}")
+        # 修复AppId花括号
+        iss_content = iss_content.replace("{{{{{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}}}}}", "{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}")
+        # 修复其他Inno Setup常量
+        iss_content = iss_content.replace("{{autopf}}", "{autopf}")
+        iss_content = iss_content.replace("{{app}}", "{app}")
+        iss_content = iss_content.replace("{{group}}", "{group}")
+        iss_content = iss_content.replace("{{commondesktop}}", "{commondesktop}")
+        iss_content = iss_content.replace("{{uninstallexe}}", "{uninstallexe}")
+        iss_content = iss_content.replace("{{cm:", "{cm:")
+        iss_content = iss_content.replace("{{src}}", "{#src}")
+        iss_content = iss_content.replace("{{#StringChange", "{#StringChange")
+        iss_content = iss_content.replace(")}}", ")}")
+        iss_content = iss_content.replace("}}", "}")
+        # 移除中文语言支持（避免缺失文件错误）
+        iss_content = iss_content.replace('Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"', '')
+
         # 写入ISS文件
         iss_file = self.project_root / "FPGABuilder-Offline.iss"
         with open(iss_file, "w", encoding="utf-8") as f:
