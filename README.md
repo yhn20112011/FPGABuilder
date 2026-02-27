@@ -19,7 +19,7 @@ FPGABuilder是一个跨平台的FPGA自动构建工具链，支持Windows环境�
 
 1. 下载最新版本的FPGABuilder安装包
 2. 运行安装程序，按照提示完成安装
-3. 安装完成后，重启命令行终端
+3. 安装完成后，环境变量会自动更新，可以立即使用。如果命令未识别，请重启命令行终端或手动刷新环境变量。
 4. 验证安装：`FPGABuilder --version`
 
 ### 从源代码安装
@@ -80,7 +80,7 @@ FPGABuilder 0.2.0及以上版本提供了增强的Windows离线安装程序，�
 
 **主要特性：**
 - 🚀 **完全离线**：无需网络连接，包含所有Python依赖
-- 🐍 **自包含Python**：通过PyInstaller打包，无需单独安装Python
+- 🐍 **自包含运行时**：通过PyInstaller打包为独立可执行文件，无需安装Python或任何依赖
 - 🔧 **自动环境配置**：安装时可选"将FPGABuilder添加到系统PATH"
 - 🛡️ **管理员权限**：自动请求管理员权限以修改系统环境变量
 - 📦 **依赖检查**：安装前检查系统Python状态和依赖
@@ -107,11 +107,94 @@ python scripts/package.py --all
 3. 自动PATH环境变量管理
 4. 安装后启动FPGABuilder（可选）
 5. 完善的依赖和Python环境检查
+6. 安装后验证（自动运行`FPGABuilder --version`验证安装）
 
 **注意事项：**
 - 需要Windows 7及以上版本（64位推荐）
 - 需要管理员权限以修改系统PATH
 - 安装程序使用Inno Setup 6+构建，确保已安装Inno Setup
+
+### 故障排除
+
+如果在安装或使用过程中遇到问题，请参考以下解决方案：
+
+#### 安装后命令不可用
+
+**问题**：安装完成后，在命令行中运行`FPGABuilder --version`提示"命令未找到"。
+
+**解决方案**：
+1. **重启终端**：关闭并重新打开命令行窗口，使环境变量变更生效。
+2. **手动刷新环境变量**：
+   - 在命令提示符中运行：`refreshenv`（如果可用）
+   - 或在PowerShell中运行：`$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")`
+3. **检查PATH环境变量**：
+   ```cmd
+   echo %PATH% | findstr /i "FPGABuilder"
+   ```
+   如果未找到，请手动将安装目录添加到PATH环境变量。
+4. **使用完整路径**：直接运行安装目录下的可执行文件：
+   ```cmd
+   "C:\Program Files\FPGABuilder\FPGABuilder.exe" --version
+   ```
+
+#### 插件加载失败
+
+**问题**：运行Vivado相关命令时提示插件加载失败。
+
+**解决方案**：
+1. **验证安装完整性**：运行安装验证工具：
+   ```bash
+   python scripts/install_verifier.py
+   ```
+2. **检查插件文件**：确保`plugins/vivado/`目录下的所有文件存在。
+3. **重新安装**：如果问题持续，尝试重新安装FPGABuilder。
+
+#### 依赖项找不到
+
+**问题**：运行时提示缺少Python模块或依赖项。
+
+**解决方案**：
+1. **离线安装程序**：确保使用的是最新的离线安装程序，它包含了所有必需的依赖。
+2. **Python环境**：如果从源代码运行，请安装所有依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **PyInstaller打包问题**：如果使用打包版本，请报告issue。
+
+#### 安装验证工具
+
+FPGABuilder提供了安装验证工具，可以自动检测和诊断常见问题：
+
+```bash
+# 运行完整验证
+python scripts/install_verifier.py
+
+# 快速验证
+python scripts/install_verifier.py --quick
+
+# 指定安装目录验证
+python scripts/install_verifier.py --install-dir "C:\Program Files\FPGABuilder"
+
+# 保存验证报告
+python scripts/install_verifier.py --output verification_report.json
+```
+
+验证工具会检查以下项目：
+- ✅ 可执行文件是否存在
+- ✅ PATH环境变量设置
+- ✅ 基本命令功能（--version, --help）
+- ✅ Python环境状态
+- ✅ 插件加载能力
+
+#### 获取帮助
+
+如果以上解决方案无法解决问题，请：
+1. 查看[GitHub Issues](https://github.com/yhn20112011/FPGABuilder/issues)中是否有类似问题
+2. 提交新的Issue，包含：
+   - 操作系统版本
+   - FPGABuilder版本
+   - 错误信息和日志
+   - 验证工具输出报告
 
 ### 清理构建文件
 

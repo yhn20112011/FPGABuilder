@@ -119,25 +119,50 @@ class Packager:
 block_cipher = None
 
 a = Analysis(
-    ['{(self.project_root / "src" / "core" / "cli.py").as_posix()}'],
-    pathex=['{(self.project_root).as_posix()}'],
+    ['{(self.project_root / "scripts" / "launcher.py").as_posix()}'],
+    pathex=['{(self.project_root).as_posix()}', '{(self.project_root / "src").as_posix()}'],
     binaries=[],
     datas=[
         ('{(self.project_root / "src" / "core").as_posix()}', 'core'),
         ('{(self.project_root / "src" / "plugins").as_posix()}', 'plugins'),
+        ('{(self.project_root / "scripts").as_posix()}', 'scripts'),
     ],
     hiddenimports=[
+        'core',
         'core.config',
         'core.project',
         'core.plugin_manager',
         'core.plugin_base',
+        'core.__init__',
+        'plugins',
+        'plugins.vivado',
         'plugins.vivado.plugin',
         'plugins.vivado.file_scanner',
         'plugins.vivado.tcl_templates',
+        'plugins.vivado.packbin_templates',
+        'plugins.vivado.__init__',
+        'plugins.__init__',
+        'click',
+        'pyyaml',
+        'colorama',
+        'toml',
+        'jsonschema',
+        'pydantic',
+        'tqdm',
+        'rich',
+        'prompt_toolkit',
+        'questionary',
+        'python_dotenv',
+        'watchdog',
+        'gitpython',
+        'requests',
+        'aiohttp',
+        'pathlib',
+        'typing',
     ],
     hookspath=[],
     hooksconfig={{}},
-    runtime_hooks=[],
+    runtime_hooks=['scripts/runtime_hook.py'],
     excludes=[],
     noarchive=False,
     optimize=2,
@@ -461,6 +486,7 @@ Name: "{{commondesktop}}\{{#MyAppName}}"; Filename: "{{app}}\{{#MyAppExeName}}";
 
 [Run]
 Filename: "{{app}}\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: nowait postinstall skipifsilent
+Filename: "{{app}}\{{#MyAppExeName}}"; Parameters: "--version"; Description: "验证安装"; Flags: postinstall nowait skipifsilent
 
 [Code]
 // 函数：检查Python是否已安装（可选）
@@ -531,6 +557,17 @@ begin
   Result := True;
 end;
 
+// 函数：广播环境变量变更
+procedure BroadcastEnvironmentChange();
+var
+  Res: DWORD;
+begin
+  // 发送WM_SETTINGCHANGE消息，通知所有窗口环境变量已更改
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+    LPARAM(PChar('Environment')), SMTO_ABORTIFHUNG, 5000, Res);
+  Log('已广播环境变量变更通知');
+end;
+
 // 函数：修改系统PATH环境变量
 procedure AddToPath(InstallDir: string);
 var
@@ -586,6 +623,9 @@ begin
       Log('错误: 无法写入用户PATH注册表');
     end;
   end;
+
+  // 广播环境变量变更通知
+  BroadcastEnvironmentChange();
 end;
 
 // 函数：从PATH中移除安装目录
