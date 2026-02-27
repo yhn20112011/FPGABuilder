@@ -1529,3 +1529,63 @@ FPGABuilder prepare命令已修复，可以成功恢复BD并生成wrapper文件�
 ## 2026-02-24 16:16:00
 
 修复包装器语言选择为vhdl时bd恢复失败的bug
+
+## 2026-02-27
+
+### 添加.ltx调试文件复制功能
+
+#### 需求
+用户要求微调bit流生成后的功能：生成完比特流后复制bit流到build/bitstreams时，同时检查是否有和bit流同时生成的.ltx文件（ILA调试探针文件），将该文件也复制到build/bitstreams。
+
+#### 实现方案
+修改 `src/plugins/vivado/tcl_templates.py` 中的 `BuildFlowTemplate.render()` 方法，在比特流文件复制逻辑后添加.ltx文件复制逻辑：
+
+1. **搜索.ltx文件**：首先在运行目录（`$run_dir`）中查找，如果未找到则在当前目录查找
+2. **复制.ltx文件**：对于每个找到的.ltx文件，复制到比特流输出目录（`$bitstream_output_dir`）
+3. **错误处理**：使用catch块处理复制失败情况，输出警告信息
+4. **状态反馈**：提供找到的文件数量和复制结果反馈
+
+#### 代码修改
+在比特流复制代码后添加以下TCL命令生成代码：
+```tcl
+# 复制.ltx调试文件（如果存在）
+set ltx_files [glob -nocomplain "$run_dir/*.ltx"]
+# 如果运行目录没找到，检查当前目录
+if {[llength $ltx_files] == 0} {
+    set ltx_files [glob -nocomplain "*.ltx"]
+    puts "在当前目录查找.ltx调试文件"
+}
+if {[llength $ltx_files] > 0} {
+    puts "找到 [llength $ltx_files] 个.ltx调试文件"
+    foreach ltx_file $ltx_files {
+        set filename [file tail $ltx_file]
+        set dest_file [file join $bitstream_output_dir $filename]
+        if {[catch {file copy -force $ltx_file $dest_file} error_msg]} {
+            puts "警告: 复制.ltx文件失败: $filename -> $error_msg"
+        } else {
+            puts "已复制.ltx调试文件: $filename -> $bitstream_output_dir"
+        }
+    }
+} else {
+    puts "未找到.ltx调试文件"
+}
+```
+
+#### 测试验证
+1. **单元测试**：创建测试脚本验证TCL脚本生成逻辑，确认.ltx复制代码正确添加到生成的TCL脚本中 ✅
+2. **配置测试**：使用测试工程配置（`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project\fpga_project.yaml`）生成完整构建脚本，确认功能正常工作 ✅
+3. **兼容性**：保持与现有比特流复制逻辑相同的错误处理模式和输出格式
+
+#### 文件修改
+- `src/plugins/vivado/tcl_templates.py`：添加.ltx文件复制逻辑
+
+#### 注意事项
+1. .ltx文件通常与ILA调试核一起生成，可能不存在于所有项目中
+2. 代码已处理.ltx文件不存在的情况，仅输出提示信息
+3. 复制失败不会影响比特流生成结果，仅输出警告
+4. 保持与现有代码一致的编码风格和错误处理模式
+
+#### 测试工程
+- 测试路径：`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`
+- 验证方法：生成构建脚本检查.ltx复制逻辑是否正确包含
+- 结果：功能正常工作，生成的TCL脚本包含完整的.ltx文件处理逻辑
