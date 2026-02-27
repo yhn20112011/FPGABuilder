@@ -72,7 +72,7 @@ class BasicProjectTemplate(TCLTemplateBase):
     def render(self) -> str:
         """渲染基本工程创建模板"""
         lines = [
-            '# Vivado工程创建脚本 - 由FPGABuilder生成',
+            '# Vivado工程创建脚本 - 由FPGABuilder生成 BY YiHok',
             f'# 项目: {self.project_name}',
             f'# 器件: {self.fpga_part}',
             ''

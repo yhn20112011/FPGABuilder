@@ -38,7 +38,7 @@ class PackBinTemplate:
     def render(self) -> str:
         """渲染二进制合并模板"""
         lines = [
-            '# 二进制文件合并脚本 - 由FPGABuilder生成',
+            '# 二进制文件合并脚本 - 由FPGABuilder生成 BY YiHok',
             f'# 项目: {self.project_name}',
             ''
         ]
