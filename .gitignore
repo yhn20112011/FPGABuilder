@@ -116,4 +116,4 @@ backup_existing_project/
 !.gitkeep
 
 # 用户数据
-user_data/
+user_data/*.iss

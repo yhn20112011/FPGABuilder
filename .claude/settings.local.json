@@ -26,7 +26,9 @@
       "Bash(pip show:*)",
       "Bash(pip uninstall:*)",
       "Bash(\"C:\\\\Users\\\\NUC\\\\AppData\\\\Local\\\\Packages\\\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\\\LocalCache\\\\local-packages\\\\Python312\\\\Scripts\\\\FPGABuilder.exe\" --version)",
-      "Bash(fpgabuilder.bat:*)"
+      "Bash(fpgabuilder.bat:*)",
+      "Bash(\"FPGABuilder-Offline-Setup-0.2.0.exe\":*)",
+      "Bash(./FPGABuilder.exe:*)"
     ]
   }
 }
