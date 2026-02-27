@@ -489,6 +489,7 @@ Filename: "{{app}}\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#Strin
 Filename: "{{app}}\{{#MyAppExeName}}"; Parameters: "--version"; Description: "验证安装"; Flags: postinstall nowait skipifsilent
 
 [Code]
+
 // 函数：检查Python是否已安装（可选）
 function IsPythonInstalled(): Boolean;
 var
@@ -557,16 +558,16 @@ begin
   Result := True;
 end;
 
-// 函数：广播环境变量变更
-procedure BroadcastEnvironmentChange();
-var
-  Res: DWORD;
-begin
-  // 发送WM_SETTINGCHANGE消息，通知所有窗口环境变量已更改
-  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
-    LPARAM(PChar('Environment')), SMTO_ABORTIFHUNG, 5000, Res);
-  Log('已广播环境变量变更通知');
-end;
+// 函数：广播环境变量变更（已禁用，因为需要Windows API声明）
+// procedure BroadcastEnvironmentChange();
+// var
+//   Res: DWORD;
+// begin
+//   // 发送WM_SETTINGCHANGE消息，通知所有窗口环境变量已更改
+//   SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+//     LPARAM(PChar('Environment')), SMTO_ABORTIFHUNG, 5000, Res);
+//   Log('已广播环境变量变更通知');
+// end;
 
 // 函数：修改系统PATH环境变量
 procedure AddToPath(InstallDir: string);
@@ -624,8 +625,8 @@ begin
     end;
   end;
 
-  // 广播环境变量变更通知
-  BroadcastEnvironmentChange();
+  // 广播环境变量变更通知（已禁用）
+  // BroadcastEnvironmentChange();
 end;
 
 // 函数：从PATH中移除安装目录
@@ -734,8 +735,6 @@ end;
         iss_content = iss_content.replace("{{#MyAppExeName}}", "{#MyAppExeName}")
         iss_content = iss_content.replace("{{#OutputDir}}", "{#OutputDir}")
         iss_content = iss_content.replace("{{#src}}", "{#src}")
-        # 修复AppId花括号
-        iss_content = iss_content.replace("{{{{{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}}}}}", "{{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}")
         # 修复其他Inno Setup常量
         iss_content = iss_content.replace("{{autopf}}", "{autopf}")
         iss_content = iss_content.replace("{{app}}", "{app}")
@@ -747,6 +746,8 @@ end;
         iss_content = iss_content.replace("{{#StringChange", "{#StringChange")
         iss_content = iss_content.replace(")}}", ")}")
         iss_content = iss_content.replace("}}", "}")
+        # 修复AppId花括号（确保有两个闭合花括号）
+        iss_content = iss_content.replace("AppId={{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}", "AppId={{FC2B9F7F-3B2A-4B8E-9F6D-7C8E5A3B2D1A}}")
         # 移除中文语言支持（避免缺失文件错误）
         iss_content = iss_content.replace('Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"', '')
 
