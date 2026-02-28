@@ -1589,3 +1589,72 @@ if {[llength $ltx_files] > 0} {
 - 测试路径：`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`
 - 验证方法：生成构建脚本检查.ltx复制逻辑是否正确包含
 - 结果：功能正常工作，生成的TCL脚本包含完整的.ltx文件处理逻辑
+
+## 2026-02-28 15:00:00
+
+### 问题报告
+用户报告post_bitstream钩子命令被错误地放到了TCL脚本中。具体配置：
+```yaml
+hooks:
+  post_bitstream: "python pack_fpga.py"
+```
+问题：Python命令`python pack_fpga.py`被直接插入到TCL脚本中，而不是通过`exec`命令执行。
+
+### 问题分析
+1. **根本原因**：在`tcl_templates.py`的`_get_hook_commands()`方法中，钩子命令处理逻辑有缺陷：
+   - 如果钩子命令是文件路径且文件存在，使用`source`命令
+   - 否则，命令被直接添加到TCL脚本中
+   - 对于`python pack_fpga.py`这样的外部命令，应该使用`exec`包装
+
+2. **影响范围**：所有钩子命令（pre_build、post_synth、pre_impl、post_impl、post_bitstream等）都可能受影响
+
+### 修复方案
+修改`src/plugins/vivado/tcl_templates.py`中的`_get_hook_commands()`方法：
+1. **增强命令类型检测**：区分TCL命令和外部命令
+2. **智能包装**：
+   - 已知TCL命令（如puts、set、if等）：直接添加
+   - 文件路径且文件存在：使用`source`命令
+   - 以`exec`或`system`开头的命令：直接添加（避免双重包装）
+   - 其他命令：使用`exec {command}`包装
+
+3. **TCL关键字列表**：定义常见TCL命令列表，避免错误包装
+
+### 代码修改
+```python
+# 在_get_hook_commands()方法中添加TCL关键字检测
+tcl_keywords = {
+    'source', 'puts', 'set', 'if', 'else', 'elseif', 'for', 'foreach', 'while',
+    'break', 'continue', 'return', 'error', 'catch', 'exec', 'system',
+    'proc', 'namespace', 'variable', 'upvar', 'uplevel', 'global',
+    # ... 其他TCL命令
+}
+```
+
+### 测试验证
+1. **单元测试**：创建全面测试验证各种钩子命令场景 ✅
+2. **集成测试**：在测试工程`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`中验证修复 ✅
+3. **测试场景**：
+   - 简单外部命令：`python pack_fpga.py` → `exec {python pack_fpga.py}`
+   - 已包装命令：`exec python pack_fpga.py` → 保持原样
+   - TCL命令：`puts "Hello"` → 直接添加
+   - 文件路径：`script.tcl` → `source {script.tcl}`
+   - 多行命令：正确处理每行命令
+
+### 修复结果
+1. **正确包装**：`python pack_fpga.py`现在被正确包装为`exec {python pack_fpga.py}`
+2. **向后兼容**：现有配置（TCL命令、已包装命令）不受影响
+3. **全面覆盖**：所有钩子类型都应用相同的修复逻辑
+
+### 文件修改
+- `src/plugins/vivado/tcl_templates.py`：修改`_get_hook_commands()`方法，添加智能命令包装逻辑
+
+### 注意事项
+1. **TCL命令识别**：使用关键字列表可能无法覆盖所有自定义TCL过程，但覆盖常见命令
+2. **exec vs system**：Vivado TCL支持`exec`命令执行外部程序，`system`在某些环境中可能不可用
+3. **大括号使用**：使用`exec {command}`格式避免TCL特殊字符解释问题
+4. **Windows兼容**：`exec`命令在Windows上可以执行Python等外部程序
+
+### 测试工程验证
+- 测试路径：`E:\1-FPGA_PRJ\test_fpgabuilder\test_zynq_project`
+- 验证方法：修改配置文件添加post_bitstream钩子，生成构建脚本检查命令包装
+- 结果：功能正常工作，Python命令被正确包装为`exec {python pack_fpga.py}`

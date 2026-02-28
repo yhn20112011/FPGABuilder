@@ -40,6 +40,24 @@ class TCLTemplateBase:
             # 字符串，按换行符分割，过滤空行
             script_items = [line.strip() for line in str(hook_script).split('\n') if line.strip()]
 
+        # 已知的TCL命令列表（不需要exec包装）
+        tcl_keywords = {
+            'source', 'puts', 'set', 'if', 'else', 'elseif', 'for', 'foreach', 'while',
+            'break', 'continue', 'return', 'error', 'catch', 'exec', 'system',
+            'proc', 'namespace', 'variable', 'upvar', 'uplevel', 'global',
+            'array', 'list', 'dict', 'string', 'regexp', 'regsub', 'scan', 'format',
+            'file', 'open', 'close', 'read', 'write', 'seek', 'tell', 'eof',
+            'gets', 'flush', 'chan', 'fconfigure', 'socket', 'after', 'update',
+            'info', 'trace', 'rename', 'unset', 'append', 'lappend', 'incr',
+            'expr', 'switch', 'case', 'default', 'package', 'load', 'apply',
+            'eval', 'subst', 'uplevel', 'upvar', 'vwait', 'event',
+            'get_property', 'set_property', 'create_project', 'launch_runs',
+            'wait_on_run', 'reset_runs', 'open_project', 'close_project',
+            'add_files', 'update_compile_order', 'make_wrapper', 'generate_target',
+            'open_bd_design', 'current_bd_design', 'get_files', 'get_runs',
+            'file', 'glob', 'cd', 'pwd', 'exit'
+        }
+
         for item in script_items:
             # 检查是脚本文件还是直接命令
             hook_path = Path(item)
@@ -47,8 +65,20 @@ class TCLTemplateBase:
                 # 是脚本文件，使用source命令
                 commands.append(f'source {{{item}}}')
             else:
-                # 直接命令
-                commands.append(item)
+                # 检查是否是TCL命令
+                # 提取命令的第一个单词（去除前导空格后）
+                first_word = item.split()[0] if item.strip() else ''
+                # 检查是否已经是exec或system命令
+                if first_word in {'exec', 'system'}:
+                    # 已经是外部命令调用，直接添加
+                    commands.append(item)
+                elif first_word in tcl_keywords:
+                    # 是已知的TCL命令，直接添加
+                    commands.append(item)
+                else:
+                    # 可能是外部命令，使用exec包装
+                    # 注意：使用花括号引用命令以避免TCL特殊字符问题
+                    commands.append(f'exec {{{item}}}')
 
         return commands
 
