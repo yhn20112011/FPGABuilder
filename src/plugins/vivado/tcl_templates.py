@@ -6,7 +6,7 @@ Vivado TCL模板系统
 提供模块化的TCL脚本生成功能
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 import os
 
@@ -24,23 +24,18 @@ class TCLTemplateBase:
         """渲染模板为TCL脚本"""
         raise NotImplementedError
 
-    def _get_hook_commands(self, hook_name: str) -> List[str]:
-        """获取钩子脚本命令"""
-        hooks = self.config.get('build', {}).get('hooks', {})
-        hook_script = hooks.get(hook_name)
+    def _is_tcl_command(self, command: str) -> Tuple[bool, str]:
+        """判断命令是否是TCL命令
 
-        if not hook_script:
-            return []
+        Args:
+            command: 命令字符串
 
-        commands = []
-        # 支持字符串或字符串数组
-        if isinstance(hook_script, list):
-            script_items = hook_script
-        else:
-            # 字符串，按换行符分割，过滤空行
-            script_items = [line.strip() for line in str(hook_script).split('\n') if line.strip()]
-
-        # 已知的TCL命令列表（不需要exec包装）
+        Returns:
+            (is_tcl, processed_command):
+                is_tcl: 是否是TCL命令（应该在TCL脚本中执行）
+                processed_command: 处理后的命令（对于TCL命令）
+        """
+        # TCL关键字列表
         tcl_keywords = {
             'source', 'puts', 'set', 'if', 'else', 'elseif', 'for', 'foreach', 'while',
             'break', 'continue', 'return', 'error', 'catch', 'exec', 'system',
@@ -58,29 +53,85 @@ class TCLTemplateBase:
             'file', 'glob', 'cd', 'pwd', 'exit'
         }
 
+        # 检查是否是文件路径
+        first_word = command.split()[0] if command.strip() else ''
+        path = Path(first_word)
+
+        if path.exists() and path.is_file():
+            # 检查文件扩展名
+            ext = path.suffix.lower()
+            if ext in ['.tcl', '.script']:
+                # TCL脚本文件，使用source命令
+                return True, f'source {{{command}}}'
+            elif ext in ['.py', '.pyw', '.sh', '.bat', '.cmd', '.ps1', '.exe']:
+                # 非TCL脚本文件或可执行文件
+                return False, command
+            # 其他扩展名默认为非TCL文件
+
+        # 检查是否已经是exec或system命令
+        if first_word in {'exec', 'system'}:
+            return True, command
+
+        # 检查是否是TCL关键字
+        if first_word in tcl_keywords:
+            return True, command
+
+        # 默认认为不是TCL命令
+        return False, command
+
+    def _get_hook_commands(self, hook_name: str) -> List[str]:
+        """获取钩子脚本命令（返回TCL命令）"""
+        hooks = self.config.get('build', {}).get('hooks', {})
+        hook_script = hooks.get(hook_name)
+
+        if not hook_script:
+            return []
+
+        commands = []
+        # 支持字符串或字符串数组
+        if isinstance(hook_script, list):
+            script_items = hook_script
+        else:
+            # 字符串，按换行符分割，过滤空行
+            script_items = [line.strip() for line in str(hook_script).split('\n') if line.strip()]
+
         for item in script_items:
-            # 检查是脚本文件还是直接命令
-            hook_path = Path(item)
-            if hook_path.exists() and hook_path.is_file():
-                # 是脚本文件，使用source命令
-                commands.append(f'source {{{item}}}')
+            is_tcl, processed_cmd = self._is_tcl_command(item)
+            if is_tcl:
+                commands.append(processed_cmd)
             else:
-                # 检查是否是TCL命令
-                # 提取命令的第一个单词（去除前导空格后）
-                first_word = item.split()[0] if item.strip() else ''
-                # 检查是否已经是exec或system命令
-                if first_word in {'exec', 'system'}:
-                    # 已经是外部命令调用，直接添加
-                    commands.append(item)
-                elif first_word in tcl_keywords:
-                    # 是已知的TCL命令，直接添加
-                    commands.append(item)
-                else:
-                    # 可能是外部命令，使用exec包装
-                    # 注意：使用花括号引用命令以避免TCL特殊字符问题
-                    commands.append(f'exec {{{item}}}')
+                # 非TCL命令，使用exec包装以便在TCL中执行
+                # 这是为了向后兼容，但调用者可以选择不在TCL中执行
+                commands.append(f'exec {{{item}}}')
 
         return commands
+
+    def _analyze_hook_commands(self, hook_name: str) -> Tuple[List[str], List[str]]:
+        """分析钩子命令，返回(TCL命令列表, 非TCL命令列表)"""
+        hooks = self.config.get('build', {}).get('hooks', {})
+        hook_script = hooks.get(hook_name)
+
+        if not hook_script:
+            return [], []
+
+        tcl_commands = []
+        non_tcl_commands = []
+
+        # 支持字符串或字符串数组
+        if isinstance(hook_script, list):
+            script_items = hook_script
+        else:
+            # 字符串，按换行符分割，过滤空行
+            script_items = [line.strip() for line in str(hook_script).split('\n') if line.strip()]
+
+        for item in script_items:
+            is_tcl, processed_cmd = self._is_tcl_command(item)
+            if is_tcl:
+                tcl_commands.append(processed_cmd)
+            else:
+                non_tcl_commands.append(item)
+
+        return tcl_commands, non_tcl_commands
 
     def _execute_hook(self, hook_name: str, tcl_script_lines: List[str]):
         """执行钩子脚本"""
@@ -380,6 +431,22 @@ class BuildFlowTemplate(TCLTemplateBase):
         self.synthesis_config = self.build_config.get('synthesis', {})
         self.implementation_config = self.build_config.get('implementation', {})
         self.bitstream_config = self.build_config.get('bitstream', {})
+        # 收集非TCL钩子命令
+        self.non_tcl_hooks: Dict[str, List[str]] = {}
+
+    def _execute_hook_smart(self, hook_name: str, tcl_script_lines: List[str]):
+        """智能执行钩子：TCL命令添加到脚本，非TCL命令收集起来"""
+        tcl_commands, non_tcl_commands = self._analyze_hook_commands(hook_name)
+
+        # 保存非TCL命令
+        if non_tcl_commands:
+            self.non_tcl_hooks[hook_name] = non_tcl_commands
+
+        # 添加TCL命令到脚本
+        if tcl_commands:
+            tcl_script_lines.append(f'\n# {hook_name} 钩子脚本')
+            for cmd in tcl_commands:
+                tcl_script_lines.append(cmd)
 
     def render(self) -> str:
         """渲染构建流程模板"""
@@ -389,7 +456,7 @@ class BuildFlowTemplate(TCLTemplateBase):
         ]
 
         # 构建前钩子
-        self._execute_hook('pre_build', lines)
+        self._execute_hook_smart('pre_build', lines)
 
         # 综合前钩子
         self._execute_hook('pre_synth', lines)
@@ -544,7 +611,7 @@ class BuildFlowTemplate(TCLTemplateBase):
         lines.append('')
 
         # 比特流后钩子
-        self._execute_hook('post_bitstream', lines)
+        self._execute_hook_smart('post_bitstream', lines)
 
         # 二进制合并脚本
         bin_merge_script = self.config.get('build', {}).get('hooks', {}).get('bin_merge_script')
@@ -552,9 +619,25 @@ class BuildFlowTemplate(TCLTemplateBase):
             lines.append('# 执行二进制合并脚本')
             bin_script_path = Path(bin_merge_script)
             if bin_script_path.exists():
-                lines.append(f'source {{{bin_merge_script}}}')
+                # 检查是否是TCL脚本文件
+                ext = bin_script_path.suffix.lower()
+                if ext in ['.tcl', '.script']:
+                    # TCL脚本文件，添加到TCL脚本中
+                    lines.append(f'source {{{bin_merge_script}}}')
+                else:
+                    # 非TCL脚本文件，收集到非TCL钩子中
+                    self.non_tcl_hooks['bin_merge_script'] = [bin_merge_script]
+                    lines.append(f'# 注意：非TCL脚本将在Python层面执行: {bin_merge_script}')
             else:
-                lines.append(f'# 警告：二进制合并脚本不存在: {bin_merge_script}')
+                # 文件不存在，检查是否是命令
+                is_tcl, processed_cmd = self._is_tcl_command(bin_merge_script)
+                if is_tcl:
+                    # TCL命令，添加到TCL脚本中
+                    lines.append(processed_cmd)
+                else:
+                    # 非TCL命令，收集到非TCL钩子中
+                    self.non_tcl_hooks['bin_merge_script'] = [bin_merge_script]
+                    lines.append(f'# 注意：非TCL命令将在Python层面执行: {bin_merge_script}')
             lines.append('')
 
         lines.append('puts "构建流程完成"')
@@ -675,6 +758,7 @@ class TCLScriptGenerator:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.project_name = config.get('project', {}).get('name', 'fpga_project')
+        self.non_tcl_hooks: Dict[str, List[str]] = {}
 
     def generate_full_build_script(self, file_scanner_results: Optional[Dict[str, Any]] = None) -> str:
         """生成完整构建脚本"""
@@ -700,6 +784,9 @@ class TCLScriptGenerator:
         # 5. 构建流程
         build_template = BuildFlowTemplate(self.config)
         script_parts.append(build_template.render())
+
+        # 保存非TCL钩子供外部访问
+        self.non_tcl_hooks = getattr(build_template, 'non_tcl_hooks', {})
 
         return '\n'.join(script_parts)
 
