@@ -7,7 +7,9 @@ Xilinx Vivado插件实现
 
 import os
 import re
+import shlex
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
@@ -631,6 +633,48 @@ class VivadoPlugin(FPGAVendorPlugin):
 
         return result
 
+    def _execute_hook_commands(self, hook_name: str, commands: List[str]) -> Tuple[bool, List[str]]:
+        """执行钩子命令列表，返回(是否全部成功, 错误消息列表)"""
+        if not commands:
+            return True, []
+
+        errors = []
+        all_success = True
+
+        for cmd in commands:
+            print(f"执行 {hook_name} 钩子命令: {cmd}")
+            try:
+                # 使用subprocess执行命令
+                import subprocess
+                import shlex
+                # 分割命令参数，支持带空格的参数
+                if sys.platform == 'win32':
+                    # Windows下不分割，使用shell执行
+                    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+                else:
+                    args = shlex.split(cmd)
+                    result = subprocess.run(args, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+
+                if result.returncode != 0:
+                    error_msg = f"钩子命令执行失败: {cmd} (返回码: {result.returncode})"
+                    if result.stderr:
+                        error_msg += f"\n错误输出: {result.stderr[:500]}"
+                    errors.append(error_msg)
+                    all_success = False
+                    print(f"警告: {error_msg}")
+                else:
+                    print(f"钩子命令执行成功: {cmd}")
+                    if result.stdout:
+                        print(f"输出: {result.stdout[:500]}")
+
+            except Exception as e:
+                error_msg = f"执行钩子命令时发生异常: {cmd} -> {e}"
+                errors.append(error_msg)
+                all_success = False
+                print(f"错误: {error_msg}")
+
+        return all_success, errors
+
     def create_project(self, config: Dict[str, Any]) -> BuildResult:
         """创建Vivado工程"""
         if not self.initialize(config):
@@ -656,14 +700,46 @@ class VivadoPlugin(FPGAVendorPlugin):
         generator = TCLScriptGenerator(adapted_config)
         tcl_script = generator.generate_full_build_script(scan_result['scanned_files'])
 
+        # 获取非TCL钩子命令
+        non_tcl_hooks = getattr(generator, 'non_tcl_hooks', {})
+
+        # 执行pre_build钩子（非TCL命令）
+        pre_build_commands = non_tcl_hooks.get('pre_build', [])
+        if pre_build_commands:
+            print("执行pre_build非TCL钩子命令...")
+            success, errors = self._execute_hook_commands('pre_build', pre_build_commands)
+            if not success:
+                # 记录错误但不中止构建，让用户决定
+                result.warnings = getattr(result, 'warnings', []) + errors
+                print("警告: pre_build钩子命令执行失败，但继续构建流程")
+
         # 执行TCL脚本
         result = self._run_vivado_tcl(tcl_script, "create_project.tcl")
+
+        # 执行post_bitstream钩子（非TCL命令）
+        post_bitstream_commands = non_tcl_hooks.get('post_bitstream', [])
+        if post_bitstream_commands:
+            print("执行post_bitstream非TCL钩子命令...")
+            success, errors = self._execute_hook_commands('post_bitstream', post_bitstream_commands)
+            if not success:
+                result.warnings = getattr(result, 'warnings', []) + errors
+                print("警告: post_bitstream钩子命令执行失败")
+
+        # 执行bin_merge_script钩子（非TCL命令）
+        bin_merge_commands = non_tcl_hooks.get('bin_merge_script', [])
+        if bin_merge_commands:
+            print("执行bin_merge_script非TCL钩子命令...")
+            success, errors = self._execute_hook_commands('bin_merge_script', bin_merge_commands)
+            if not success:
+                result.warnings = getattr(result, 'warnings', []) + errors
+                print("警告: bin_merge_script钩子命令执行失败")
 
         # 如果成功，添加额外的工件信息
         if result.success:
             result.artifacts.update({
                 'project_created': '工程创建完成',
-                'scanned_files_count': f"{len(scan_result.get('sorted_hdl_files', []))} HDL文件"
+                'scanned_files_count': f"{len(scan_result.get('sorted_hdl_files', []))} HDL文件",
+                'non_tcl_hooks_executed': str(list(non_tcl_hooks.keys()))
             })
             print("Vivado工程创建成功")
         else:
