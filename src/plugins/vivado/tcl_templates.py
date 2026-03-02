@@ -761,15 +761,15 @@ class GUITemplate(TCLTemplateBase):
         lines.append('open_bd_design [get_files *.bd]')
         lines.append('')
 
-        # 打开综合设计
-        lines.append('# 打开综合设计')
-        lines.append('open_run synth_1')
-        lines.append('')
+        # # 打开综合设计
+        # lines.append('# 打开综合设计')
+        # lines.append('open_run synth_1')
+        # lines.append('')
 
-        # 打开实现设计
-        lines.append('# 打开实现设计')
-        lines.append('open_run impl_1')
-        lines.append('')
+        # # 打开实现设计
+        # lines.append('# 打开实现设计')
+        # lines.append('open_run impl_1')
+        # lines.append('')
 
         lines.append('puts "GUI已打开"')
         return '\n'.join(lines)
